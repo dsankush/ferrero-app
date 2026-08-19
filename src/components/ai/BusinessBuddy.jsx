@@ -56,7 +56,7 @@ Keep responses short, actionable, and encouraging. Use emojis!`;
             // Set a timeout for the AI response
             const timeoutPromise = new Promise((_, reject) =>
                 timeoutRef.current = setTimeout(
-                    () => reject(new Error('AI response took too long. Please try again.')),
+                    () => reject(new Error('Advisor response took too long. Please try again.')),
                     12000 // 12 second timeout
                 )
             );
@@ -74,7 +74,7 @@ Keep responses short, actionable, and encouraging. Use emojis!`;
             if (response && response.trim()) {
                 setMessages(prev => [...prev, { role: 'ai', text: response }]);
             } else {
-                throw new Error('Empty response from AI');
+                throw new Error('Empty response from Advisor');
             }
         } catch (error) {
             setIsTyping(false);

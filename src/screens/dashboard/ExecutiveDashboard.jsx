@@ -891,7 +891,7 @@ export const ExecutiveDashboard = () => {
           <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', margin: '.3rem 0 0 0' }}>
             {totalInvoices} <span style={{ fontSize: '.82rem', color: '#999', fontWeight: 700 }}>bills</span>
           </h2>
-          <p style={{ fontSize: '.68rem', color: 'var(--g4)', margin: '.2rem 0 0 0', fontWeight: 700 }}>100% Gemini OCR</p>
+          <p style={{ fontSize: '.68rem', color: 'var(--g4)', margin: '.2rem 0 0 0', fontWeight: 700 }}>100% Digital Verification</p>
         </div>
 
       </div>

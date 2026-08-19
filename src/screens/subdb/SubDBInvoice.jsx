@@ -96,7 +96,7 @@ export const SubDBInvoice = () => {
     try {
       const result = await scanInvoice(selectedFile);
       if (result?.is_live_ai) {
-        showToast('✨ Gemini AI Vision PDF scan completed!', 'success');
+        showToast('✨ Digital Document Verification completed!', 'success');
       } else {
         showToast('✅ Invoice PDF scanned & parsed successfully!', 'success');
       }
@@ -226,7 +226,7 @@ export const SubDBInvoice = () => {
                     Upload Sub-DB Invoice PDF
                   </p>
                   <p style={{ fontSize: '.78rem', color: 'var(--t3)', margin: 0 }}>
-                    AI OCR auto-extracts SKUs, boxes, & total value
+                    Automated system extracts SKUs, boxes & total value
                   </p>
                 </div>
               )}
@@ -274,7 +274,7 @@ export const SubDBInvoice = () => {
                     .sdb-spin { width:2.2rem;height:2.2rem;border-radius:50%;border:3px solid rgba(212,165,116,0.2);border-top-color:#d4a574;animation:sdbSpin .8s linear infinite;margin:0 auto .75rem; }
                   `}</style>
                   <div className="sdb-spin" />
-                  <p style={{ fontWeight: 900, color: '#d4a574', margin: '0 0 .25rem' }}>Gemini AI Processing PDF...</p>
+                  <p style={{ fontWeight: 900, color: '#d4a574', margin: '0 0 .25rem' }}>Optical Engine Processing Document...</p>
                   <p style={{ fontSize: '.75rem', color: 'var(--t3)', margin: 0 }}>Extracting line items and verifying retailer stock</p>
                 </div>
               )}
@@ -314,7 +314,7 @@ export const SubDBInvoice = () => {
                 </span>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '.75rem', fontWeight: 800, color: 'var(--t1)', margin: 0 }}>
-                    AI Scan Verified · High Confidence
+                    Digital Verification · High Confidence
                   </p>
                   <p style={{ fontSize: '.68rem', color: 'var(--t3)', margin: 0 }}>
                     Extracted {form.products.length} SKU items totaling ₹{Number(form.total_amount).toLocaleString('en-IN')}

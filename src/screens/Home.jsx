@@ -483,7 +483,7 @@ Wallet: ₹${walletBalance}`;
                      </div>
                      <div onClick={() => navigate('/assistant')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.4rem', cursor: 'pointer' }}>
                         <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(212,165,116,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--g4)', fontSize: '1.1rem' }}>auto_awesome</span></div>
-                        <span style={{ fontSize: '.62rem', fontWeight: 700, color: 'var(--t2)' }}>Assistant</span>
+                        <span style={{ fontSize: '.62rem', fontWeight: 700, color: 'var(--t2)' }}>Advisor</span>
                      </div>
                      <div onClick={() => setShowRaiseIssue(true)} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.4rem', cursor: 'pointer' }}>
                         <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(239,68,68,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: '#ef4444', fontSize: '1.1rem' }}>support_agent</span></div>

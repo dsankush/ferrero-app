@@ -260,7 +260,7 @@ export const SubDBDashboard = () => {
             </div>
             <div>
               <p style={{ fontSize: '.95rem', fontWeight: 900, color: '#d4a574', margin: '0 0 .1rem' }}>Upload Invoice PDF</p>
-              <p style={{ fontSize: '.7rem', color: 'var(--t3)', margin: 0 }}>AI OCR auto-extracts SKUs & credits retailer</p>
+              <p style={{ fontSize: '.7rem', color: 'var(--t3)', margin: 0 }}>Automated system extracts SKUs & credits retailer</p>
             </div>
             <span className="material-symbols-outlined fi" style={{ color: '#d4a574', fontSize: '1.3rem', marginLeft: 'auto' }}>chevron_right</span>
           </div>

@@ -90,7 +90,7 @@ export const MainDashboard = () => {
 
   // Settings state
   const [pointsRatio, setPointsRatio] = useState('10'); // 10 points = 1 Rupee
-  const [geminiKey, setGeminiKey] = useState('••••••••••••••••••••');
+  const [ocrApiKey, setOcrApiKey] = useState('••••••••••••••••••••');
   const [showSettingsToast, setShowSettingsToast] = useState(false);
 
   // Add full-page class to body on mount
@@ -1426,8 +1426,8 @@ export const MainDashboard = () => {
             <input type="number" value={pointsRatio} onChange={e => setPointsRatio(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #ebdcd0', borderRadius: '8px' }} />
           </div>
           <div className="form-group" style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', fontSize: '13px' }}>Gemini OCR Vision API Key</label>
-            <input type="text" value={geminiKey} onChange={e => setGeminiKey(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #ebdcd0', borderRadius: '8px' }} />
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 'bold', fontSize: '13px' }}>Document OCR & Scanning API Key</label>
+            <input type="text" value={ocrApiKey} onChange={e => setOcrApiKey(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #ebdcd0', borderRadius: '8px' }} />
           </div>
           <button type="submit" className="btn-primary" style={{ width: '100%' }}>Save Platform Rules</button>
         </form>

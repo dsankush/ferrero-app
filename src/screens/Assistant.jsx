@@ -82,7 +82,7 @@ Rules:
 
   return (
     <div className="screen active" style={{ background: 'var(--bg1)' }}>
-      <Header title="CounterOS AI Assistant" subtitle="Smart Business Advisor" backTo="/home" />
+      <Header title="CounterOS Store Business Advisor" subtitle="Smart Business Advisor" backTo="/home" />
       
       <div className="scroller" ref={scrollRef} style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '.5rem' }}>
