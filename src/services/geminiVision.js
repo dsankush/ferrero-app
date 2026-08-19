@@ -4,7 +4,7 @@
  * Key read from import.meta.env.VITE_GEMINI_KEY
  */
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_KEY || '';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_KEY || import.meta.env.VITE_GEMINI_API_KEY || '';
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const INVOICE_EXTRACTION_PROMPT = `You are an expert invoice OCR system for an Indian wholesale/retail business.

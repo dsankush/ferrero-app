@@ -104,7 +104,7 @@ export const SubDBInvoice = () => {
     setScanError(null);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_KEY || '';
+      const apiKey = import.meta.env.VITE_GEMINI_KEY || import.meta.env.VITE_GEMINI_API_KEY || '';
       let result;
 
       if (!apiKey || apiKey.length < 20) {
