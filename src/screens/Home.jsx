@@ -180,7 +180,7 @@ Wallet: ₹${walletBalance}`;
                       </div>
                    </div>
                    {/* POINT CREDITS SECTION - UPGRADED PREMIUM REWARDS WIDGET */}
-             <div className="au d2" style={{ background: 'linear-gradient(135deg, #1d120d 0%, #0b0604 100%)', border: '2.5px solid #d4a574', borderRadius: 'var(--r16)', overflow: 'hidden', marginBottom: '1.5rem', boxShadow: 'var(--sh)', padding: '1.25rem 1.1rem', position: 'relative' }}>
+             <div className="au d2" style={{ background: 'var(--bg1)', border: '2px solid #d4a574', borderRadius: 'var(--r16)', overflow: 'hidden', marginBottom: '1.5rem', boxShadow: 'var(--sh)', padding: '1.25rem 1.1rem', position: 'relative' }}>
                 <style>{`
                   @keyframes marquee {
                     0% { transform: translate3d(0, 0, 0); }
@@ -630,7 +630,7 @@ Wallet: ₹${walletBalance}`;
              </div>
 
              {/* Modal description */}
-             <p style={{ fontSize: '.75rem', color: '#9c8572', margin: '0 0 1.25rem 0', lineHeight: 1.4 }}>
+             <p style={{ fontSize: '.75rem', color: 'var(--t2)', margin: '0 0 1.25rem 0', lineHeight: 1.4 }}>
                Achieve your monthly business metrics to earn bonus points. Points are credited immediately upon claiming.
              </p>
 
@@ -650,12 +650,12 @@ Wallet: ₹${walletBalance}`;
                    <div 
                      key={t.id}
                      style={{
-                       background: 'rgba(255,255,255,0.02)',
+                       background: 'var(--bg2)',
                        border: isClaimed 
                          ? '1.5px solid rgba(72,187,120,0.3)' 
                          : isCompleted 
                            ? '1.5px solid #d4a574' 
-                           : '1.5px solid rgba(212,165,116,0.15)',
+                           : '1.5px solid var(--bdr2)',
                        borderRadius: '12px',
                        padding: '.85rem',
                        display: 'flex',
@@ -667,12 +667,12 @@ Wallet: ₹${walletBalance}`;
                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                        <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
                          <span style={{ fontSize: '1rem' }}>{emoji}</span>
-                         <h4 style={{ fontSize: '.82rem', fontWeight: 800, color: '#fff', margin: 0 }}>{t.title}</h4>
+                         <h4 style={{ fontSize: '.82rem', fontWeight: 800, color: 'var(--t1)', margin: 0 }}>{t.title}</h4>
                        </div>
                        <span style={{
                          fontSize: '.62rem',
                          fontWeight: 900,
-                         color: isClaimed ? '#9c8572' : '#d4a574',
+                         color: isClaimed ? 'var(--t3)' : '#d4a574',
                          background: isClaimed ? 'rgba(255,255,255,0.05)' : 'rgba(212,165,116,0.12)',
                          border: isClaimed ? '1px solid rgba(255,255,255,0.1)' : '1px solid #d4a574',
                          padding: '.15rem .4rem',
@@ -683,16 +683,16 @@ Wallet: ₹${walletBalance}`;
                      </div>
 
                      {/* Description */}
-                     <p style={{ fontSize: '.68rem', color: '#9c8572', margin: 0, lineHeight: 1.3 }}>{t.description}</p>
+                     <p style={{ fontSize: '.68rem', color: 'var(--t2)', margin: 0, lineHeight: 1.3 }}>{t.description}</p>
 
                      {/* Target progress numbers */}
-                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.68rem', color: '#fff', fontWeight: 700 }}>
-                       <span style={{ color: '#9c8572' }}>Progress</span>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.68rem', color: 'var(--t1)', fontWeight: 700 }}>
+                       <span style={{ color: 'var(--t3)' }}>Progress</span>
                        <span>{t.current_value} / {t.target_value} {t.unit}</span>
                      </div>
 
                      {/* Target progress bar */}
-                     <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '9999px', overflow: 'hidden' }}>
+                     <div style={{ height: '6px', background: 'var(--bg3)', borderRadius: '9999px', overflow: 'hidden' }}>
                        <div 
                          style={{ 
                            height: '100%', 

@@ -51,6 +51,22 @@
 [data-theme="light"] [style*="background:linear-gradient(135deg,#0d1f0e"],[data-theme="light"] [style*="background:linear-gradient(135deg,#122416"],[data-theme="light"] [style*="background:linear-gradient(145deg,#0c1e0d"],[data-theme="light"] [style*="background:linear-gradient(135deg,#0c1e0d"]{background:var(--bg2)!important;border-color:var(--bdr2)!important}
 [data-theme="light"] [style*="background:#000"]{background:var(--bg1)!important}
 [data-theme="light"] [style*="color:#edf5ed"],[data-theme="light"] [style*="color:var(--t1)"]{color:var(--t1)!important}
+
+/* Automatic contrast safeguard for task cards and modals in light mode */
+[data-theme="light"] h1, [data-theme="light"] h2, [data-theme="light"] h3, [data-theme="light"] h4, [data-theme="light"] h5, [data-theme="light"] h6 {
+  color: var(--t1);
+}
+[data-theme="light"] div:not([style*="linear-gradient"]):not(button):not(.btn) > [style*="color: #fff"],
+[data-theme="light"] div:not([style*="linear-gradient"]):not(button):not(.btn) > [style*="color:#fff"],
+[data-theme="light"] span:not(button *):not(.btn *)[style*="color: #fff"],
+[data-theme="light"] span:not(button *):not(.btn *)[style*="color:#fff"],
+[data-theme="light"] p:not(button *):not(.btn *)[style*="color: #fff"],
+[data-theme="light"] p:not(button *):not(.btn *)[style*="color:#fff"],
+[data-theme="light"] strong:not(button *):not(.btn *)[style*="color: #fff"],
+[data-theme="light"] strong:not(button *):not(.btn *)[style*="color:#fff"] {
+  color: var(--t1) !important;
+}
+
 /* Home wallet card light override */
 [data-theme="light"] #homeBalance{color:var(--t1)!important}
 [data-theme="light"] .btn-primary{color:#fff!important;text-shadow:none}
@@ -62,9 +78,14 @@
 [data-theme="light"] .ifield{background:var(--inp)!important;border-color:var(--bdr2)!important;color:var(--t1)!important}
 [data-theme="light"] .nb{color:var(--t3)!important}
 [data-theme="light"] .nb.active{color:var(--g4)!important}
-[data-theme="light"] p,[data-theme="light"] span,[data-theme="light"] h1,[data-theme="light"] h2,[data-theme="light"] h3{color:inherit}
-/* Hardcoded dark gradients on home screen override */
-[data-theme="light"] #s-home .scroller [style*="#0c1e0d"],[data-theme="light"] #s-home .scroller [style*="#0d1f0e"],[data-theme="light"] #s-home .scroller [style*="#122416"],[data-theme="light"] #s-home .scroller [style*="#081208"]{background:var(--bg2)!important}
+
+/* Target & Task modal cards contrast safeguard */
+[data-theme="light"] [style*="background: rgba(255,255,255,0.02)"],
+[data-theme="light"] [style*="background:rgba(255,255,255,0.02)"],
+[data-theme="light"] [style*="background: rgba(255, 255, 255, 0.02)"] {
+  background: var(--bg2) !important;
+  border-color: var(--bdr2) !important;
+}
 
 *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
 html{height:100%;height:100dvh;background:#000;font-size:16px;overflow:hidden}
