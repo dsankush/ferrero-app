@@ -655,6 +655,18 @@ export const ExecutiveDashboard = () => {
           </button>
 
           <button
+            onClick={exportGrievancesCSV}
+            style={{
+              padding: '.65rem 1.1rem', background: 'rgba(212,165,116,0.15)',
+              border: '1px solid #d4a574', borderRadius: '10px', color: '#d4a574', fontWeight: 900, fontSize: '.82rem',
+              display: 'flex', alignItems: 'center', gap: '.4rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(212,165,116,.2)'
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>support_agent</span>
+            📥 Grievances CSV Report
+          </button>
+
+          <button
             onClick={() => navigate('/home')}
             style={{
               padding: '.65rem 1.1rem', background: 'rgba(255,255,255,0.06)',
@@ -1585,6 +1597,28 @@ export const ExecutiveDashboard = () => {
                   </div>
                 </div>
                 <span className="material-symbols-outlined" style={{ color: 'var(--g4)' }}>arrow_forward</span>
+              </button>
+
+              {/* Option 3: Grievances & Disputes Report CSV */}
+              <button
+                onClick={() => {
+                  setShowExportModal(false);
+                  exportGrievancesCSV();
+                }}
+                style={{
+                  padding: '.85rem 1.25rem', background: 'rgba(56, 189, 248, 0.1)',
+                  border: '1.5px solid #38bdf8', borderRadius: '12px', color: '#fff', fontWeight: 900, fontSize: '.9rem',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#38bdf8', fontSize: '1.2rem' }}>support_agent</span>
+                  <div style={{ textAlign: 'left' }}>
+                    <p style={{ margin: 0, fontWeight: 900, color: '#38bdf8' }}>📥 Download Grievances & Retailer Queries CSV</p>
+                    <span style={{ fontSize: '.72rem', color: '#bbb', fontWeight: 600 }}>Retailer names, shop names, mobile numbers, queries, Sub-DB reps & status</span>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined" style={{ color: '#38bdf8' }}>arrow_forward</span>
               </button>
 
               {/* Option 3: Cancel */}
