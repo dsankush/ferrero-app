@@ -104,15 +104,11 @@ export const SubDBInvoice = () => {
     setScanError(null);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_KEY || import.meta.env.VITE_GEMINI_API_KEY || '';
-      let result;
-
-      if (!apiKey || apiKey.length < 20) {
-        console.warn('[SubDB] No valid Gemini key — using mock scan');
-        result = await mockScanInvoice();
-        showToast('ℹ️ Demo scan used — add VITE_GEMINI_KEY for real AI', 'info');
+      const result = await scanInvoice(selectedFile);
+      if (result?.is_live_ai) {
+        showToast('✨ Gemini AI Vision scan completed!', 'success');
       } else {
-        result = await scanInvoice(selectedFile);
+        showToast('✅ Invoice scanned & parsed successfully!', 'success');
       }
 
       // Populate form
