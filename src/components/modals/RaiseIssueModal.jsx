@@ -35,7 +35,10 @@ export const RaiseIssueModal = ({ invoice, onClose, onSuccess }) => {
         invoice_number: invoiceNumber.trim() || null,
         priority,
         retailer_name: user?.name || 'Retailer Partner',
-        retailer_phone: user?.phone || '9876543210'
+        shop_name: user?.shop || user?.shop_name || 'Retailer Store',
+        retailer_phone: user?.phone || '9876543210',
+        assigned_to: invoice?.wholesaler_name || 'Gupta Ferrero Rocher Wholesaler (Sub-DB)',
+        senior_rep: 'Rajesh Sharma (Area Sales Manager - ASM)'
       });
 
       showToast?.(`✅ Ticket #${ticket.ticket_id} created! Ferrero Helpdesk will call you.`, 'success');

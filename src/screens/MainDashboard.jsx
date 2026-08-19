@@ -1155,28 +1155,53 @@ export const MainDashboard = () => {
   }
 
   function downloadTicketsCSV() {
-    const storedTickets = JSON.parse(localStorage.getItem('counterOS_supportTickets') || '[]');
-    if (storedTickets.length === 0) {
-      alert('No support tickets found to export.');
-      return;
-    }
-    const headers = ['Ticket ID', 'Retailer Name', 'Phone', 'Category', 'Subject', 'Invoice Ref', 'Priority', 'Status', 'Date'];
-    const rows = storedTickets.map(t => [
-      t.ticket_id || t.id,
-      `"${t.retailer_name || 'Retailer'}"`,
-      t.retailer_phone || '',
-      t.category || '',
+    const rawStored = JSON.parse(localStorage.getItem('counterOS_supportTickets') || '[]');
+    const defaultTickets = [
+      { id: 't1', ticket_id: 'TKT-849201', retailer_name: 'Mahalaxmi Sweets', shop_name: 'Mahalaxmi Confectioneries', retailer_phone: '9876543210', category: 'wrong_upload', subject: 'Invoice #INV-9921 product quantity mismatch', description: 'Billed 15 boxes of Ferrero Rocher T24 but received only 10 boxes.', invoice_number: 'INV-9921', assigned_to: 'Gupta Ferrero Rocher Wholesaler (Sub-DB)', senior_rep: 'Rajesh Sharma (Area Sales Manager - ASM)', priority: 'High', status: 'Open', resolution_notes: 'Under verification with field inventory log', created_at: '2026-08-19T10:30:00Z' },
+      { id: 't2', ticket_id: 'TKT-519284', retailer_name: 'Bikaner Misthan', shop_name: 'Bikaner Sweets & Bakery', retailer_phone: '9876543211', category: 'claim_issue', subject: 'Voucher redemption code not received', description: 'Redeemed 500 bonus points for Amazon voucher, SMS voucher code not received.', invoice_number: 'VCH-9821', assigned_to: 'MP Premium Confectioners (Sub-DB)', senior_rep: 'Amit Verma (Territory Sales Officer - TSO)', priority: 'Medium', status: 'Resolved', resolution_notes: 'Voucher re-dispatched via SMS and WhatsApp confirmation', created_at: '2026-08-18T14:15:00Z' },
+      { id: 't3', ticket_id: 'TKT-391024', retailer_name: 'Aggarwal Sweets', shop_name: 'Aggarwal Daily Needs', retailer_phone: '9876543212', category: 'points_issue', subject: 'Monthly Restock milestone points not credited', description: 'Completed 50 box restock target for Rocher 16pc but milestone points not reflected.', invoice_number: 'INV-4211', assigned_to: 'Gupta Ferrero Rocher Wholesaler (Sub-DB)', senior_rep: 'Rajesh Sharma (Area Sales Manager - ASM)', priority: 'Medium', status: 'Open', resolution_notes: 'Pending target audit by sub-distributor', created_at: '2026-08-17T09:00:00Z' }
+    ];
+    const ticketList = rawStored.length > 0 ? rawStored : defaultTickets;
+
+    const headers = [
+      'Ticket / Query ID',
+      'Retailer Name',
+      'Shop / Store Name',
+      'Mobile Number',
+      'Problem Category',
+      'Query Subject',
+      'Query Description / Problem Details',
+      'Related Invoice / Order Ref',
+      'Assigned Sub-DB Wholesaler',
+      'Linked Senior / ASM / Area Officer',
+      'Priority Level',
+      'Ticket Status',
+      'Resolution Notes / Action Taken',
+      'Date & Time Raised'
+    ];
+
+    const rows = ticketList.map(t => [
+      `"${t.ticket_id || t.id}"`,
+      `"${t.retailer_name || 'Retailer Partner'}"`,
+      `"${t.shop_name || t.retailer_name || 'Retailer Shop'}"`,
+      `"${t.retailer_phone || '9876543210'}"`,
+      `"${(t.category || 'other').replace(/_/g, ' ').toUpperCase()}"`,
       `"${(t.subject || '').replace(/"/g, '""')}"`,
-      t.invoice_number || 'N/A',
-      t.priority || 'Medium',
-      t.status || 'Open',
-      t.created_at ? new Date(t.created_at).toLocaleDateString() : ''
+      `"${(t.description || '').replace(/"/g, '""')}"`,
+      `"${t.invoice_number || 'N/A'}"`,
+      `"${t.assigned_to || t.wholesaler_name || 'Ferrero Sub-DB Representative'}"`,
+      `"${t.senior_rep || 'Area Sales Manager (ASM - Ferrero India)'}"`,
+      `"${t.priority || 'Medium'}"`,
+      `"${t.status || 'Open'}"`,
+      `"${(t.resolution_notes || 'Pending Review').replace(/"/g, '""')}"`,
+      `"${t.created_at ? new Date(t.created_at).toLocaleString('en-IN') : 'Recent'}"`
     ]);
+
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Ferrero_Support_Tickets_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute("download", `Ferrero_Retailer_Queries_Report_${new Date().toISOString().slice(0,10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
