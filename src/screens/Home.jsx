@@ -74,11 +74,23 @@ Wallet: ₹${walletBalance}`;
   const fname = user.name.split(' ')[0] || 'Ramesh';
   const locShort = user.loc ? user.loc.split(',')[0] : 'India';
 
-  const totalProgress = monthlyTargets.reduce((acc, t) => {
-    const val = Number(t.target_value) > 0 ? (Number(t.current_value) / Number(t.target_value)) * 100 : 0;
+  const targetsList = Array.isArray(monthlyTargets) && monthlyTargets.length > 0 ? monthlyTargets : [
+    { id: 'target-1', title: 'Rocher Restock Target', description: 'Restock Ferrero Rocher cartons to boost inventory.', current_value: 35, target_value: 50, unit: 'cartons', points_reward: 5000, status: 'in_progress' },
+    { id: 'target-2', title: 'Rocher 16pc Sales Target', description: 'Sell Ferrero Rocher 16pc boxes to retail customers.', current_value: 12, target_value: 15, unit: 'boxes', points_reward: 1500, status: 'in_progress' },
+    { id: 'target-3', title: 'Commission Earnings Target', description: 'Earn commissions by selling premium Ferrero assortments.', current_value: 750, target_value: 1000, unit: '₹', points_reward: 3000, status: 'in_progress' }
+  ];
+
+  const getCurVal = (t) => Number(t.current_value ?? t.restocked_boxes ?? t.current_boxes ?? t.spend_amount ?? 0) || 0;
+  const getTgtVal = (t) => Number(t.target_value ?? t.target_boxes ?? t.target_spend ?? 1) || 1;
+  const getPtsVal = (t) => Number(t.points_reward ?? t.bonus_points ?? 500) || 500;
+
+  const totalProgress = targetsList.reduce((acc, t) => {
+    const cur = getCurVal(t);
+    const tgt = getTgtVal(t);
+    const val = tgt > 0 ? (cur / tgt) * 100 : 0;
     return acc + Math.min(100, val);
   }, 0);
-  const averageProgress = Math.round(totalProgress / (monthlyTargets.length || 1));
+  const averageProgress = Math.round(totalProgress / (targetsList.length || 1)) || 0;
 
   const triggerConfetti = () => {
     const colors = ['#d4a574', '#c41e3a', '#8b6f47', '#ffd700', '#ff0000'];

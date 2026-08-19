@@ -47,16 +47,22 @@ export const Earnings = () => {
     { id: 't3', title: 'Monthly Sub-DB Restock Spend ₹40k', current_value: 32500, target_value: 40000, unit: '₹', points_reward: 600, status: 'in_progress' }
   ];
 
-  const totalTargetPoints = targets.reduce((sum, t) => sum + (Number(t.points_reward) || 0), 0);
-  const completedTargets = targets.filter(t => t.status === 'completed' || Number(t.current_value) >= Number(t.target_value));
-  const earnedTargetPoints = completedTargets.reduce((sum, t) => sum + (Number(t.points_reward) || 0), 0);
+  const getCurVal = (t) => Number(t.current_value ?? t.restocked_boxes ?? t.current_boxes ?? t.spend_amount ?? 0) || 0;
+  const getTgtVal = (t) => Number(t.target_value ?? t.target_boxes ?? t.target_spend ?? 1) || 1;
+  const getPtsVal = (t) => Number(t.points_reward ?? t.bonus_points ?? 500) || 500;
+
+  const totalTargetPoints = targets.reduce((sum, t) => sum + getPtsVal(t), 0);
+  const completedTargets = targets.filter(t => t.status === 'completed' || getCurVal(t) >= getTgtVal(t));
+  const earnedTargetPoints = completedTargets.reduce((sum, t) => sum + getPtsVal(t), 0);
 
   const avgProgress = Math.round(
     targets.reduce((acc, t) => {
-      const val = Number(t.target_value) > 0 ? (Number(t.current_value) / Number(t.target_value)) * 100 : 0;
+      const cur = getCurVal(t);
+      const tgt = getTgtVal(t);
+      const val = tgt > 0 ? (cur / tgt) * 100 : 0;
       return acc + Math.min(100, val);
     }, 0) / (targets.length || 1)
-  );
+  ) || 0;
 
   // Selected month for bifurcation drill-down
   const [selectedMonthKey, setSelectedMonthKey] = useState('aug');
