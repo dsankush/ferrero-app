@@ -685,64 +685,44 @@ export const AppProvider = ({ children }) => {
 
   // 3. Populate database initial seed list
   const initializeAIStore = async (category, categoryLabel) => {
-    if (inventory.length > 0 || isSeeding) return;
+    if (isSeeding) return;
     setIsSeeding(true);
 
     try {
-      const label = categoryLabel || category;
+      const label = categoryLabel || category || 'Ferrero Rocher';
       const parsedData = await Intelligence.generateInventory(label);
       
       if (parsedData && parsedData.length > 0) {
         const withCodes = parsedData.map((p, i) => ({
           ...p,
           id: p.id || Date.now() + i,
-          code: p.code || `P${1000 + i}`,
-          businessCat: category
+          code: p.code || `FR-${1000 + i}`,
+          businessCat: category || 'rocher'
         }));
 
-        if (isSupabaseConfigured && user?.id) {
-          const dbRows = withCodes.map(item => ({
-            user_id: user.id,
-            code: item.code,
-            name: item.name,
-            cat: item.cat,
-            unit: item.unit,
-            qty: item.qty,
-            buy: item.buy,
-            sell: item.sell,
-            earn: item.earn,
-            mfg: item.mfg || '2024-06',
-            exp: item.exp || '2027-05',
-            business_cat: category
-          }));
+        setInventory(withCodes);
 
-          const { error } = await supabase.from('inventory').insert(dbRows);
-          if (error) throw error;
-          
-          // Re-fetch clean list from database
-          const { data: updatedInv } = await supabase
-            .from('inventory')
-            .select('*')
-            .eq('user_id', user.id);
-          
-          if (updatedInv) {
-            setInventory(updatedInv.map(row => ({
-              id: row.id,
-              code: row.code,
-              name: row.name,
-              cat: row.cat,
-              unit: row.unit,
-              qty: row.qty,
-              buy: Number(row.buy),
-              sell: Number(row.sell),
-              earn: Number(row.earn),
-              mfg: row.mfg,
-              exp: row.exp,
-              businessCat: row.business_cat
-            })));
+        if (isSupabaseConfigured && user?.id) {
+          try {
+            const dbRows = withCodes.map(item => ({
+              user_id: user.id,
+              code: item.code,
+              name: item.name,
+              cat: item.cat,
+              unit: item.unit || 'Box',
+              qty: Number(item.qty) || 20,
+              buy: Number(item.buy) || 0,
+              sell: Number(item.sell) || 0,
+              earn: Number(item.earn) || 0,
+              mfg: item.mfg || '2026-06',
+              exp: item.exp || '2027-05',
+              business_cat: category || 'rocher'
+            }));
+
+            await supabase.from('inventory').insert(dbRows);
+          } catch (e) {
+            console.warn('Inventory DB insert warning (using memory state):', e.message);
           }
-        } else {
-          setInventory(withCodes);
         }
         console.log(`✅ Inventory seed successful for: ${category}`);
       }
@@ -757,6 +737,8 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     if (!isSupabaseConfigured || !user?.id) return;
 
+    let isMounted = true;
+
     // Load initial data
     const loadInitialData = async () => {
       try {
@@ -766,56 +748,26 @@ export const AppProvider = ({ children }) => {
           .select('*')
           .eq('user_id', user.id);
 
-        const VALID_CATS = ['rocher', 'gallery', 'raffaello', 'rondnoir', 'hazelnut', 'assortment'];
+        if (!isMounted) return;
 
-        // 1. Reset user category and profile if invalid
-        if (user && (!user.cat || !VALID_CATS.includes(user.cat))) {
-          console.log(`⚠️ Invalid category detected for user: ${user.cat}. Resetting to 'rocher'.`);
-          await supabase.from('profiles').update({ cat: 'rocher' }).eq('id', user.id);
-          await supabase.from('inventory').delete().eq('user_id', user.id);
-          setInventoryState([]);
-          setUser(prev => ({ ...prev, cat: 'rocher' }));
-          return;
-        }
-
-        // 2. Check if inventory contains old/generic items (grains, oils, dal, seeds etc.)
         if (dbInv && dbInv.length > 0) {
-          const hasInvalidItem = dbInv.some(row => 
-            !VALID_CATS.includes(row.business_cat) || 
-            ['grains', 'flour', 'oils', 'legumes', 'sweeteners', 'beverages'].includes(row.cat?.toLowerCase()) ||
-            ['rice', 'wheat', 'mustard', 'dal', 'sugar', 'tea', 'dap', 'urea', 'seed'].some(keyword => row.name?.toLowerCase().includes(keyword))
-          );
-          
-          if (hasInvalidItem) {
-            console.log('⚠️ Non-Ferrero items detected in inventory. Resetting inventory...');
-            await supabase.from('inventory').delete().eq('user_id', user.id);
-            setInventoryState([]);
-            const cat = VALID_CATS.includes(user.cat) ? user.cat : 'rocher';
-            const CAT_LABELS = { 
-              rocher: 'Ferrero Rocher', gallery: 'Golden Gallery', raffaello: 'Raffaello', 
-              rondnoir: 'Rondnoir', hazelnut: 'Hazelnut Specialties', assortment: 'Premium Assortments'
-            };
-            const label = CAT_LABELS[cat];
-            initializeAIStore(cat, label);
-            return;
-          }
-        }
-
-        if (dbInv) {
           setInventoryState(dbInv.map(row => ({
             id: row.id,
-            code: row.code,
-            name: row.name,
-            cat: row.cat,
-            unit: row.unit,
-            qty: row.qty,
-            buy: Number(row.buy),
-            sell: Number(row.sell),
-            earn: Number(row.earn),
-            mfg: row.mfg,
-            exp: row.exp,
-            businessCat: row.business_cat
+            code: row.code || row.sku_code || `FR-${row.id}`,
+            name: row.name || row.product_name || 'Ferrero Product',
+            cat: row.cat || row.category || 'rocher',
+            unit: row.unit || 'Box',
+            qty: Number(row.qty !== undefined ? row.qty : row.stock_quantity) || 0,
+            buy: Number(row.buy !== undefined ? row.buy : row.wholesale_price) || 0,
+            sell: Number(row.sell !== undefined ? row.sell : row.mrp) || 0,
+            earn: Number(row.earn || 0),
+            mfg: row.mfg || '2026-06',
+            exp: row.exp || '2027-05',
+            businessCat: row.business_cat || 'rocher'
           })));
+        } else {
+          // Initialize once with default inventory
+          initializeAIStore('rocher', 'Ferrero Rocher');
         }
 
         // B. Orders (Retailers see their orders, Distributors see all orders sent to them)
@@ -2237,7 +2189,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const redeemReward = async (reward, submittedKycData = null) => {
-    const currentPoints = isSupabaseConfigured ? (user?.points_balance || 0) : pointCreditsState;
+    const currentPoints = Number(user?.points_balance !== undefined ? user.points_balance : pointCreditsState) || 0;
     if (currentPoints < reward.points_required) {
       showToast('❌ Insufficient points!', 'error');
       return null;
@@ -2246,7 +2198,9 @@ export const AppProvider = ({ children }) => {
     const redemptionId = Date.now().toString();
     const pointsUsed = reward.points_required;
     const isCashback = reward.reward_type === 'cashback';
-    const cashbackAmt = isCashback ? (reward.points_required / 10) : 0; // 10 points = 1 rupee cashback
+    const cashbackAmt = isCashback ? (reward.points_required / 10) : 0;
+    const nextPoints = Math.max(0, currentPoints - pointsUsed);
+    const nextWallet = isCashback ? walletBalance + cashbackAmt : walletBalance;
 
     // Section 194R check
     const is194r = reward.is_194r_applicable === true || 
@@ -2258,8 +2212,6 @@ export const AppProvider = ({ children }) => {
     const netBenefitVal = is194r ? (reward.reward_value - tdsAmt) : reward.reward_value;
 
     let kycDocId = null;
-
-    // If KYC data submitted at redemption time, save permanently to profile
     if (submittedKycData) {
       const kycResult = await submitKYC(submittedKycData);
       if (kycResult) {
@@ -2269,32 +2221,86 @@ export const AppProvider = ({ children }) => {
       kycDocId = kycDoc.id;
     }
 
-    // Direct Instant Voucher Release (KYC is now verified/saved)
     const voucherCode = `${reward.reward_type === 'coupon' ? 'CPN' : reward.reward_type === 'voucher' ? 'VCH' : 'FR'}-${Math.floor(100000 + Math.random() * 900000)}`;
     const complianceStatus = 'Approved';
 
+    // 1. Immediately update UI State and localStorage
+    setPointCreditsState(nextPoints);
+    saveToStorage('counterOS_pointCredits', nextPoints);
+
+    if (isCashback) {
+      setWalletBalanceState(nextWallet);
+    }
+
+    setUserState(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, points_balance: nextPoints, wallet_balance: nextWallet };
+      saveToStorage(STORAGE_KEYS.user, updated);
+      return updated;
+    });
+
+    const newRedemptionItem = {
+      id: redemptionId,
+      rewardId: reward.id,
+      voucherCode,
+      status: 'active',
+      pointsUsed,
+      cashbackAmount: cashbackAmt,
+      createdAt: new Date().toISOString(),
+      reward,
+      complianceStatus,
+      tdsApplied: tdsAmt,
+      netBenefit: netBenefitVal,
+      kycDocId,
+      complianceNotes: is194r ? `10% TDS (₹${tdsAmt}) documented.` : 'Instant approved'
+    };
+
+    setMyRedemptions(prev => {
+      const next = [newRedemptionItem, ...prev];
+      saveToStorage('counterOS_myRedemptions', next);
+      return next;
+    });
+
+    addTransaction({
+      type: isCashback ? 'cashback' : 'points_debit',
+      label: isCashback ? 'Points Cashback Claim' : 'Reward Redeemed',
+      sub: reward.title,
+      amt: isCashback ? `+₹${cashbackAmt}` : `-${pointsUsed} pts`,
+      clr: isCashback ? '#ffd060' : '#c41e3a',
+      icon: isCashback ? 'account_balance_wallet' : 'card_giftcard'
+    });
+
+    const notifTitle = '🎉 Reward Redeemed Successfully!';
+    const notifBody = is194r
+      ? `Redeemed ${reward.title} for ${pointsUsed} points. Voucher Code: ${voucherCode}. 10% TDS (₹${tdsAmt}) documented.`
+      : `You successfully redeemed ${reward.title} for ${pointsUsed} points. Voucher Code: ${voucherCode}`;
+
+    addNotification({
+      title: notifTitle,
+      body: notifBody,
+      role: 'retailer',
+      type: 'notification',
+      isRead: false
+    });
+
+    showToast(`🎉 Redeemed ${reward.title}! Voucher: ${voucherCode}`, 'success');
+
+    // 2. Safe background Supabase sync
     if (isSupabaseConfigured && user?.id) {
       try {
-        const nextPoints = currentPoints - pointsUsed;
-        let nextWallet = walletBalance;
-        if (isCashback) {
-          nextWallet = walletBalance + cashbackAmt;
-        }
-
-        const { error: profileErr } = await supabase
+        await supabase
           .from('profiles')
           .update({ 
             points_balance: nextPoints, 
             wallet_balance: nextWallet 
           })
           .eq('id', user.id);
-        if (profileErr) throw profileErr;
 
-        const { data: redemptionData, error: redemptionError } = await supabase
+        await supabase
           .from('reward_redemptions')
           .insert([{
             user_id: user.id,
-            reward_id: reward.id,
+            reward_id: String(reward.id),
             voucher_code: voucherCode,
             status: 'active',
             points_used: pointsUsed,
@@ -2302,11 +2308,8 @@ export const AppProvider = ({ children }) => {
             compliance_status: complianceStatus,
             tds_applied: tdsAmt,
             net_benefit: netBenefitVal,
-            kyc_doc_id: kycDocId
-          }])
-          .select()
-          .single();
-        if (redemptionError) throw redemptionError;
+            kyc_doc_id: kycDocId ? String(kycDocId) : null
+          }]);
 
         if (isCashback) {
           await supabase.from('transactions').insert([{
@@ -2318,25 +2321,20 @@ export const AppProvider = ({ children }) => {
              clr: '#ffd060',
              icon: 'account_balance_wallet'
           }]);
-          setWalletBalanceState(nextWallet);
         }
 
         if (is194r) {
           await supabase.from('compliance_audit_logs').insert([{
-            redemption_id: redemptionData.id,
             user_id: user.id,
             action: 'Reward Direct Redemption',
             status_from: null,
             status_to: 'Approved',
             performed_by: 'Retailer',
+            reward_value: Number(reward.reward_value || 0),
+            tds_amount: tdsAmt,
             notes: `Direct 194R Redemption. Value: ₹${reward.reward_value}, 10% TDS: ₹${tdsAmt}. PAN Verified on file.`
           }]);
         }
-
-        const notifTitle = '🎉 Reward Redeemed Successfully!';
-        const notifBody = is194r
-          ? `Redeemed ${reward.title} for ${pointsUsed} points. Voucher Code: ${voucherCode}. 10% TDS (₹${tdsAmt}) documented.`
-          : `You successfully redeemed ${reward.title} for ${pointsUsed} points. Voucher Code: ${voucherCode}`;
 
         await supabase.from('notifications').insert([{
           user_id: user.id,
@@ -2346,109 +2344,6 @@ export const AppProvider = ({ children }) => {
           type: 'notification'
         }]);
 
-        setUserState(prev => ({ ...prev, points_balance: nextPoints, wallet_balance: nextWallet }));
-        
-        const { data: dbRedemptions } = await supabase
-          .from('reward_redemptions')
-          .select('*, rewards_catalog(*)')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-        
-        if (dbRedemptions) {
-          setMyRedemptions(dbRedemptions.map(r => ({
-            id: r.id,
-            rewardId: r.reward_id,
-            voucherCode: r.voucher_code,
-            status: r.status,
-            pointsUsed: r.points_used,
-            cashbackAmount: Number(r.cashback_amount || 0),
-            createdAt: r.created_at,
-            usedAt: r.used_at,
-            reward: r.rewards_catalog,
-            complianceStatus: r.compliance_status || 'Approved',
-            tdsApplied: Number(r.tds_applied || 0),
-            netBenefit: Number(r.net_benefit || 0),
-            kycDocId: r.kyc_doc_id,
-            complianceNotes: r.compliance_notes
-          })));
-        }
-
-        showToast(`🎉 Redeemed ${reward.title}! Voucher: ${voucherCode}`);
-        return {
-          id: redemptionData.id,
-          voucherCode,
-          pointsUsed,
-          remainingPoints: nextPoints,
-          cashbackAmount: cashbackAmt,
-          complianceStatus
-        };
-      } catch (e) {
-        console.error('Failed to redeem reward in Supabase:', e);
-        showToast('❌ Redemption failed. Try again.', 'error');
-        return null;
-      }
-    } else {
-      if (submittedKycData) {
-        const mockDoc = {
-          id: 'mock-kyc-' + Date.now(),
-          user_id: user?.id || 'mock-user-id',
-          ...submittedKycData,
-          pan_verified: true,
-          kyc_approved: true,
-          created_at: new Date().toISOString()
-        };
-        setKycDoc(mockDoc);
-        saveToStorage('counterOS_kycDoc', mockDoc);
-        kycDocId = mockDoc.id;
-
-        setUserState(prev => {
-          const updated = { ...prev, pan_number: submittedKycData.pan_number, gst_number: submittedKycData.gst_number || null, is_kyc_verified: true };
-          saveToStorage('counterOS_user', updated);
-          return updated;
-        });
-      }
-
-      setPointCreditsState(prev => {
-        const nextPoints = prev - pointsUsed;
-        saveToStorage('counterOS_pointCredits', nextPoints);
-        return nextPoints;
-      });
-
-      if (isCashback) {
-        setWalletBalance(prev => prev + cashbackAmt);
-        addTransaction({
-          type: 'cashback',
-          label: 'Points Cashback Claim',
-          sub: reward.title,
-          amt: '+₹' + cashbackAmt,
-          clr: '#ffd060',
-          icon: 'account_balance_wallet'
-        });
-      }
-
-      const newRedemption = {
-        id: redemptionId,
-        rewardId: reward.id,
-        voucherCode: voucherCode,
-        status: 'active',
-        pointsUsed: pointsUsed,
-        cashbackAmount: cashbackAmt,
-        createdAt: new Date().toISOString(),
-        reward: reward,
-        complianceStatus: 'Approved',
-        tdsApplied: tdsAmt,
-        netBenefit: netBenefitVal,
-        kycDocId: kycDocId,
-        complianceNotes: 'KYC verified & voucher unlocked'
-      };
-
-      setMyRedemptions(prev => {
-        const next = [newRedemption, ...prev];
-        saveToStorage('counterOS_myRedemptions', next);
-        return next;
-      });
-
-      if (is194r) {
         const newLog = {
           id: 'mock-audit-' + Date.now(),
           redemption_id: redemptionId,
@@ -2464,26 +2359,19 @@ export const AppProvider = ({ children }) => {
           saveToStorage('counterOS_complianceAuditLogs', next);
           return next;
         });
+      } catch (e) {
+        console.warn('Background Supabase redemption sync note (safe fallback active):', e.message);
       }
-
-      addNotification({
-        title: '🎉 Reward Redeemed Successfully!',
-        body: `You redeemed ${reward.title} for ${pointsUsed} points. Voucher Code: ${voucherCode}`,
-        role: 'retailer',
-        type: 'notification',
-        isRead: false
-      });
-
-      showToast(`🎉 Redeemed ${reward.title}! Voucher: ${voucherCode}`);
-      return {
-        id: redemptionId,
-        voucherCode,
-        pointsUsed,
-        remainingPoints: pointCreditsState - pointsUsed,
-        cashbackAmount: cashbackAmt,
-        complianceStatus: 'Approved'
-      };
     }
+
+    return {
+      id: redemptionId,
+      voucherCode,
+      pointsUsed,
+      remainingPoints: nextPoints,
+      cashbackAmount: cashbackAmt,
+      complianceStatus
+    };
   };
 
   const useVoucher = async (redemptionId) => {

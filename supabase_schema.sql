@@ -36,25 +36,45 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS points_balance INT DEFAULT 
 CREATE TABLE IF NOT EXISTS public.inventory (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    sku_code TEXT NOT NULL,
-    product_name TEXT NOT NULL,
-    category TEXT NOT NULL DEFAULT 'Chocolates',
-    stock_quantity INT NOT NULL DEFAULT 0,
-    unit_price NUMERIC(10,2) NOT NULL DEFAULT 0.00,
-    mrp NUMERIC(10,2) NOT NULL DEFAULT 0.00,
-    wholesale_price NUMERIC(10,2) NOT NULL DEFAULT 0.00,
-    batch_number TEXT DEFAULT 'BATCH-FR-2026',
+    code TEXT,
+    name TEXT NOT NULL,
+    cat TEXT DEFAULT 'rocher',
+    unit TEXT DEFAULT 'Box',
+    qty INT NOT NULL DEFAULT 0,
+    buy NUMERIC(10,2) DEFAULT 0.00,
+    sell NUMERIC(10,2) DEFAULT 0.00,
+    earn NUMERIC(10,2) DEFAULT 0.00,
+    mfg TEXT DEFAULT '2026-06',
+    exp TEXT DEFAULT '2027-05',
+    business_cat TEXT DEFAULT 'rocher',
     is_subdb_verified BOOLEAN DEFAULT true,
-    last_restocked_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT unique_user_sku UNIQUE (user_id, sku_code)
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Ensure columns exist for retro-compatibility
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS code TEXT;
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS cat TEXT;
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS unit TEXT;
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS qty INT DEFAULT 0;
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS buy NUMERIC(10,2) DEFAULT 0.00;
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS sell NUMERIC(10,2) DEFAULT 0.00;
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS earn NUMERIC(10,2) DEFAULT 0.00;
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS mfg TEXT;
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS exp TEXT;
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS business_cat TEXT;
 
 -- ─── 3. TRANSACTIONS & LOYALTY LEDGER ─────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    type TEXT NOT NULL CHECK (type IN ('SALE', 'RESTOCK', 'POINTS_CREDIT', 'POINTS_DEBIT', 'TDS_DEDUCTION')),
+    type TEXT NOT NULL DEFAULT 'POINTS_CREDIT',
+    label TEXT,
+    sub TEXT,
+    amt TEXT,
+    clr TEXT,
+    icon TEXT,
     amount NUMERIC(10,2) NOT NULL DEFAULT 0.00,
     points INT NOT NULL DEFAULT 0,
     description TEXT,
@@ -62,19 +82,30 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS label TEXT;
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS sub TEXT;
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS amt TEXT;
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS clr TEXT;
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS icon TEXT;
+
 -- ─── 4. RETAILER MONTHLY TARGETS ──────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.retailer_monthly_targets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     retailer_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    month TEXT NOT NULL, -- e.g. 'august_2026', 'july_2026', 'june_2026'
-    target_boxes INT NOT NULL DEFAULT 40,
+    title TEXT DEFAULT 'Target Quota',
+    month TEXT NOT NULL DEFAULT 'august_2026',
+    target_value INT NOT NULL DEFAULT 50,
+    current_value INT NOT NULL DEFAULT 0,
+    target_boxes INT NOT NULL DEFAULT 50,
     restocked_boxes INT NOT NULL DEFAULT 0,
+    points_reward INT NOT NULL DEFAULT 1500,
     bonus_points INT NOT NULL DEFAULT 1500,
-    status TEXT NOT NULL CHECK (status IN ('IN_PROGRESS', 'COMPLETED', 'EXCEEDED')) DEFAULT 'IN_PROGRESS',
+    unit TEXT DEFAULT 'Boxes',
+    status TEXT NOT NULL DEFAULT 'in_progress',
     spend_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00,
     top_sku TEXT DEFAULT 'Ferrero Rocher 16pc',
-    last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT unique_retailer_month UNIQUE (retailer_id, month)
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ─── 5. SUB-DB PHYSICAL INVOICES (OCR PROCESSED) ──────────────────────────────
@@ -85,11 +116,13 @@ CREATE TABLE IF NOT EXISTS public.subdb_invoices (
     retailer_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     retailer_shop TEXT NOT NULL,
     retailer_phone TEXT NOT NULL,
+    wholesaler_name TEXT DEFAULT 'Central Confectionery Agency',
     invoice_date DATE NOT NULL DEFAULT CURRENT_DATE,
     total_amount NUMERIC(10,2) NOT NULL DEFAULT 0.00,
     boxes_count INT NOT NULL DEFAULT 0,
     status TEXT NOT NULL CHECK (status IN ('verified', 'pending', 'rejected')) DEFAULT 'verified',
     items_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+    products JSONB DEFAULT '[]'::jsonb,
     ocr_confidence NUMERIC(4,2) DEFAULT 0.98,
     image_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -97,15 +130,19 @@ CREATE TABLE IF NOT EXISTS public.subdb_invoices (
 
 -- ─── 6. REWARDS CATALOG ───────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.rewards_catalog (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     category TEXT NOT NULL DEFAULT 'Vouchers',
     points_required INT NOT NULL DEFAULT 1000,
     reward_value NUMERIC(10,2) NOT NULL DEFAULT 500.00,
     brand TEXT NOT NULL DEFAULT 'Ferrero',
-    is_194r_applicable BOOLEAN DEFAULT true,
+    reward_type TEXT DEFAULT 'voucher',
+    is_194r_applicable BOOLEAN DEFAULT false,
+    tds_percentage NUMERIC(5,2) DEFAULT 0.00,
+    tds_amount NUMERIC(10,2) DEFAULT 0.00,
     image_url TEXT,
-    terms TEXT DEFAULT 'Valid for 12 months from issuance. 10% Section 194R TDS applicable.',
+    icon TEXT DEFAULT 'card_giftcard',
+    terms TEXT DEFAULT 'Valid for 12 months. 10% Section 194R TDS applicable for high-value rewards.',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -113,15 +150,16 @@ CREATE TABLE IF NOT EXISTS public.rewards_catalog (
 CREATE TABLE IF NOT EXISTS public.reward_redemptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    reward_id UUID NOT NULL REFERENCES public.rewards_catalog(id) ON DELETE CASCADE,
-    reward_title TEXT NOT NULL,
-    points_used INT NOT NULL,
-    reward_value NUMERIC(10,2) NOT NULL,
+    reward_id TEXT NOT NULL,
     voucher_code TEXT UNIQUE NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('active', 'used', 'expired')) DEFAULT 'active',
-    compliance_status TEXT NOT NULL CHECK (compliance_status IN ('Approved', 'Pending_KYC')) DEFAULT 'Approved',
-    tds_deducted NUMERIC(10,2) NOT NULL DEFAULT 0.00,
-    pan_number TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    points_used INT NOT NULL DEFAULT 0,
+    cashback_amount NUMERIC(10,2) DEFAULT 0.00,
+    compliance_status TEXT DEFAULT 'Approved',
+    tds_applied NUMERIC(10,2) DEFAULT 0.00,
+    net_benefit NUMERIC(10,2) DEFAULT 0.00,
+    kyc_doc_id TEXT,
+    compliance_notes TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     used_at TIMESTAMPTZ
 );
@@ -134,7 +172,7 @@ CREATE TABLE IF NOT EXISTS public.kyc_documents (
     full_name TEXT NOT NULL,
     address TEXT,
     id_proof_url TEXT,
-    status TEXT NOT NULL CHECK (status IN ('Verified', 'Pending', 'Rejected')) DEFAULT 'Verified',
+    status TEXT NOT NULL DEFAULT 'Verified',
     verified_at TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -142,11 +180,16 @@ CREATE TABLE IF NOT EXISTS public.kyc_documents (
 -- ─── 9. COMPLIANCE & SECTION 194R AUDIT LOGS ───────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.compliance_audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    redemption_id UUID,
     user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-    pan_number TEXT NOT NULL,
-    event_type TEXT NOT NULL,
-    reward_value NUMERIC(10,2) NOT NULL,
-    tds_amount NUMERIC(10,2) NOT NULL,
+    pan_number TEXT,
+    action TEXT DEFAULT 'Reward Direct Redemption',
+    event_type TEXT DEFAULT 'REDEMPTION',
+    status_from TEXT,
+    status_to TEXT DEFAULT 'Approved',
+    performed_by TEXT DEFAULT 'Retailer',
+    reward_value NUMERIC(10,2) DEFAULT 0.00,
+    tds_amount NUMERIC(10,2) DEFAULT 0.00,
     notes TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
