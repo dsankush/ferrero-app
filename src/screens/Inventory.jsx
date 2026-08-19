@@ -4,12 +4,11 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { Header } from '../components/layout/Header';
 import { useAppContext } from '../context/AppContext';
 import { Input } from '../components/ui/Input';
-import { showToast } from '../components/ui/Toast';
 import { ProductIcon } from '../components/ui/ProductIcon';
 
 export const Inventory = () => {
   const navigate = useNavigate();
-  const { inventory, user, addInventoryItem, isSeeding } = useAppContext();
+  const { inventory, user, isSeeding } = useAppContext();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
 
@@ -27,26 +26,6 @@ export const Inventory = () => {
         <Header 
           title="Stock Ledger" 
           subtitle={`${filtered.length}/${inventory.length} products · ${user.cat ? `🏷️ ${user.cat}` : 'All categories'}`}
-          rightContent={
-            <div style={{ display: 'flex', gap: '.6rem' }}>
-              <button 
-                className="btn-icon" 
-                onClick={() => navigate('/add-inventory')}
-                style={{ background: 'rgba(212,165,116,.1)', border: '1px solid rgba(212,165,116,.3)', color: 'var(--g4)' }}
-                title="Add Inventory"
-              >
-                <span className="material-symbols-outlined">add_box</span>
-              </button>
-              <button 
-                className="btn-icon" 
-                onClick={() => navigate('/sell')}
-                style={{ background: 'rgba(255,208,96,.1)', border: '1px solid rgba(255,208,96,.3)', color: 'var(--o4)' }}
-                title="Sell Product"
-              >
-                <span className="material-symbols-outlined">storefront</span>
-              </button>
-            </div>
-          }
         />
         
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--bdr)', background: 'var(--bg0)' }}>
@@ -60,7 +39,7 @@ export const Inventory = () => {
            />
            
            <div style={{ display: 'flex', gap: '.5rem', overflowX: 'auto', paddingBottom: '2px', marginTop: '.8rem', scrollbarWidth: 'none' }}>
-              {categories.map((c, i) => (
+              {categories.map((c) => (
                 <button 
                   key={c}
                   onClick={() => setFilter(c)}
@@ -71,16 +50,17 @@ export const Inventory = () => {
                 </button>
               ))}
            </div>
-           
-           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.8rem', marginTop: '1rem' }}>
-             <button onClick={() => navigate('/add-inventory')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr2)', borderRadius: 'var(--r8)', padding: '.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', color: 'var(--t1)', fontWeight: 700, cursor: 'pointer' }}>
-               <span className="material-symbols-outlined" style={{ color: 'var(--t2)' }}>qr_code_scanner</span>
-               Scan Barcode
-             </button>
-             <button onClick={() => navigate('/invoice')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr2)', borderRadius: 'var(--r8)', padding: '.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', color: 'var(--t1)', fontWeight: 700, cursor: 'pointer' }}>
-               <span className="material-symbols-outlined" style={{ color: 'var(--t2)' }}>receipt_long</span>
-               Upload Invoice
-             </button>
+
+           {/* Sub-DB Verified Stock Badge */}
+           <div style={{
+             marginTop: '.8rem', padding: '.5rem .8rem',
+             background: 'rgba(212,165,116,0.06)', border: '1px solid rgba(212,165,116,0.2)',
+             borderRadius: 'var(--r8)', display: 'flex', alignItems: 'center', gap: '.4rem'
+           }}>
+             <span className="material-symbols-outlined fi" style={{ fontSize: '.95rem', color: 'var(--g4)' }}>verified</span>
+             <span style={{ fontSize: '.68rem', color: 'var(--t2)', fontWeight: 600 }}>
+               Stock is automatically verified &amp; credited by your Sub-DB representative
+             </span>
            </div>
         </div>
 
@@ -88,20 +68,16 @@ export const Inventory = () => {
           {isSeeding ? (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
               <span className="material-symbols-outlined aspin" style={{ fontSize: '3rem', color: 'var(--g4)' }}>sync</span>
-              <p style={{ fontWeight: 800, marginTop: '1rem', fontSize: '1.1rem' }}>Generating Stock Ledger...</p>
-              <p style={{ color: 'var(--t3)', fontSize: '.75rem', marginTop: '.4rem' }}>Optimizing inventory for your business type</p>
+              <p style={{ fontWeight: 800, marginTop: '1rem', fontSize: '1.1rem' }}>Loading Stock Ledger...</p>
+              <p style={{ color: 'var(--t3)', fontSize: '.75rem', marginTop: '.4rem' }}>Syncing inventory records</p>
             </div>
           ) : !filtered.length ? (
             <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
               <span className="material-symbols-outlined" style={{ fontSize: '3rem', color: 'var(--t3)' }}>inventory_2</span>
-              <p style={{ color: 'var(--t2)', marginTop: '.75rem' }}>No products yet.<br/>Add items manually or upload an invoice.</p>
-              <button 
-                className="btn btn-primary" 
-                onClick={() => navigate('/add-inventory')} 
-                style={{ marginTop: '1.1rem', width: 'auto', padding: '.7rem 1.4rem', borderRadius: 'var(--r12)', background: 'var(--g4)', color: '#000', border: 'none', fontWeight: 800 }}
-              >
-                Add My First Product
-              </button>
+              <p style={{ color: 'var(--t2)', marginTop: '.75rem', fontWeight: 700 }}>No products in stock yet.</p>
+              <p style={{ color: 'var(--t3)', fontSize: '.75rem', marginTop: '.3rem', lineHeight: 1.5 }}>
+                Your stock will automatically update whenever your Ferrero Sub-DB representative scans and uploads physical bills.
+              </p>
             </div>
           ) : (
              <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem', paddingBottom: '2rem' }}>
@@ -120,15 +96,14 @@ export const Inventory = () => {
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
                          <p style={{ fontWeight: 800, fontSize: '.9rem' }}>₹{p.sell}</p>
-                         <p style={{ fontSize: '.62rem', color: 'var(--g4)' }}>{user?.role === 'distributor' ? `margin ₹${p.earn}` : `earn ₹${p.earn}`}</p>
-                         <p style={{ fontSize: '.6rem', color: 'var(--t3)' }}>{user?.role === 'distributor' ? `cost ₹${p.buy}` : `buy ₹${p.buy}`}</p>
+                         <p style={{ fontSize: '.62rem', color: 'var(--g4)' }}>earn ₹{p.earn}</p>
+                         <p style={{ fontSize: '.6rem', color: 'var(--t3)' }}>buy ₹{p.buy}</p>
                       </div>
                    </div>
                 ))}
              </div>
           )}
         </div>
-        {/* Removed Modal */}
       </div>
     </AppLayout>
   );

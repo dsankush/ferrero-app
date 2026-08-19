@@ -1,21 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAppContext } from './context/AppContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 import { Login } from './screens/Login';
 import { ShopSetup } from './screens/onboarding/ShopSetup';
-import { Distributor } from './screens/onboarding/Distributor';
-import { DistSetup } from './screens/onboarding/DistSetup';
 import { Payout } from './screens/onboarding/Payout';
 import { Ready } from './screens/onboarding/Ready';
-import { DistLinkRetailers } from './screens/onboarding/DistLinkRetailers';
 import { Home } from './screens/Home';
-import { DistHome } from './screens/DistHome';
-import { DistRetailers } from './screens/DistRetailers';
-import { BuyFromDist } from './screens/BuyFromDist';
 import { Sell } from './screens/Sell';
-
 import { Cart } from './screens/Cart';
 import { Success } from './screens/Success';
 import { Earnings } from './screens/Earnings';
@@ -29,26 +22,32 @@ import { Assistant } from './screens/Assistant';
 import { Notifications } from './screens/Notifications';
 import { Toast } from './components/ui/Toast';
 import { GlobalPopup } from './components/ui/GlobalPopup';
-import { CampaignPortal } from './screens/CampaignPortal';
 import { RewardsStore } from './screens/RewardsStore';
 import { RewardDetails } from './screens/RewardDetails';
 import { RewardsSuccess } from './screens/RewardsSuccess';
 import { MyRewards, DummyPartnerOffer } from './screens/MyRewards';
-import { Admin194rDashboard } from './screens/Admin194rDashboard';
 import { SubDBRouter } from './screens/subdb/SubDBRouter';
-import { MainDashboard } from './screens/MainDashboard';
-
-// Paths that should render OUTSIDE the mobile phone shell as full desktop pages
-const FULLPAGE_PATHS = ['/campaign-portal', '/distributor/campaign-portal', '/main_dashboard'];
+import { ExecutiveDashboard } from './screens/dashboard/ExecutiveDashboard';
 
 // Inner component that has access to useLocation
 function AppInner() {
   const location = useLocation();
   const isSubDB = location.pathname.startsWith('/subdb_platform');
-  const isCampaignPortal = FULLPAGE_PATHS.some(p => location.pathname.startsWith(p));
+  const isDashboard = location.pathname.startsWith('/dashboard');
 
-  // SubDB: render inside the shell sizing div but WITHOUT re-rendering the shell
-  // on every sub-route change. This keeps SubDBProvider alive across navigations.
+  // Executive Desktop Dashboard: render full desktop width
+  if (isDashboard) {
+    return (
+      <div style={{ width: '100vw', height: '100vh', overflowY: 'auto', overflowX: 'hidden', background: '#0d0806' }}>
+        <Toast />
+        <Routes>
+          <Route path="/dashboard" element={<ExecutiveDashboard />} />
+        </Routes>
+      </div>
+    );
+  }
+
+  // SubDB: render inside the shell sizing div
   if (isSubDB) {
     return (
       <div className="shell" id="shell">
@@ -59,21 +58,7 @@ function AppInner() {
     );
   }
 
-  if (isCampaignPortal) {
-    // Render campaign portal as a raw full-width desktop page — no shell, no overflow constraints
-    return (
-      <div style={{ width: '100%' }}>
-        <Routes>
-          <Route path="/campaign-portal" element={<CampaignPortal />} />
-          <Route path="/distributor/campaign-portal" element={<CampaignPortal />} />
-          <Route path="/main_dashboard" element={<MainDashboard />} />
-          <Route path="*" element={<CampaignPortal />} />
-        </Routes>
-      </div>
-    );
-  }
-
-  // Normal mobile shell for all other routes
+  // Normal mobile shell for Retailer routes
   return (
     <div className="shell" id="shell">
       <canvas id="confetti-c"></canvas>
@@ -83,15 +68,9 @@ function AppInner() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/setup/shop" element={<ShopSetup />} />
-        <Route path="/setup/distributor" element={<DistSetup />} />
-        <Route path="/setup/distributor-link" element={<Distributor />} />
-        <Route path="/setup/retailer-link" element={<DistLinkRetailers />} />
         <Route path="/setup/payout" element={<Payout />} />
         <Route path="/setup/ready" element={<Ready />} />
         <Route path="/home" element={<Home />} />
-        <Route path="/distributor-home" element={<DistHome />} />
-        <Route path="/dist-retailers" element={<DistRetailers />} />
-        <Route path="/buy-from-dist" element={<BuyFromDist />} />
         <Route path="/sell" element={<Sell />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/success" element={<Success />} />
@@ -111,15 +90,13 @@ function AppInner() {
         <Route path="/rewards/success" element={<RewardsSuccess />} />
         <Route path="/rewards/my-rewards" element={<MyRewards />} />
         <Route path="/rewards/partner-link/:id" element={<DummyPartnerOffer />} />
-        <Route path="/admin/194r" element={<Admin194rDashboard />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </div>
   );
 }
 
 function App() {
-  const { theme } = useAppContext();
-
   return (
     <ErrorBoundary>
       <Router>

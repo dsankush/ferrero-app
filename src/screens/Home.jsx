@@ -425,62 +425,53 @@ Wallet: ₹${walletBalance}`;
              )}
 
              {/* Quick Actions */}
-             <div className="au d2" style={{ marginBottom: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 800 }}>What would you like to do today?</h3>
-                <p style={{ fontSize: '.75rem', color: 'var(--t3)', marginBottom: '1rem' }}>Scan any product to get started</p>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.8rem', marginBottom: '.8rem' }}>
-                   <div onClick={() => navigate('/invoice')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '1rem', cursor: 'pointer', position: 'relative' }}>
-                      <div style={{ width: '3rem', height: '3rem', background: 'rgba(255,208,96,.1)', borderRadius: '.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', position: 'relative' }}>
-                         <span className="material-symbols-outlined fi" style={{ color: 'var(--o4)', fontSize: '1.6rem' }}>inventory_2</span>
-                         <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '1.2rem', height: '1.2rem', background: 'var(--g4)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000', fontSize: '1rem', fontWeight: 800 }}>+</div>
-                      </div>
-                      <p style={{ fontSize: '.9rem', fontWeight: 800, marginBottom: '.3rem' }}>Add to Inventory</p>
-                      <p style={{ fontSize: '.68rem', color: 'var(--t3)', lineHeight: 1.4 }}>Invoice or manual product add</p>
-                   </div>
-                   
-                   <div onClick={() => navigate('/sell')} style={{ background: '#fff', border: '2px solid #d4a574', borderRadius: 'var(--r12)', padding: '1rem', cursor: 'pointer', position: 'relative', transition: 'all 0.3s' }}>
-                      <div style={{ width: '3rem', height: '3rem', background: 'linear-gradient(135deg, #d4a574, #c41e3a)', borderRadius: '.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem', position: 'relative' }}>
-                         <span className="material-symbols-outlined fi" style={{ color: '#fff', fontSize: '1.6rem' }}>storefront</span>
-                         <div style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '1.2rem', height: '1.2rem', background: '#c41e3a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '.8rem' }}>
-                           <span className="material-symbols-outlined" style={{ fontSize: '.9rem' }}>bolt</span>
-                         </div>
-                      </div>
-                      <p style={{ fontSize: '.9rem', fontWeight: 900, marginBottom: '.3rem', color: '#d4a574', margin: 0 }}>Sell a Product</p>
-                      <p style={{ fontSize: '.68rem', color: '#666', lineHeight: 1.4, margin: 0 }}>Scan code or select from inventory</p>
-                   </div>
-                </div>
+              <div className="au d2" style={{ marginBottom: '1.5rem' }}>
+                 <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--t1)' }}>Store Overview</h3>
+                 <p style={{ fontSize: '.75rem', color: 'var(--t3)', marginBottom: '1rem' }}>Manage your inventory, milestones, and reward earnings</p>
+                 
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.8rem', marginBottom: '.8rem' }}>
+                    <div onClick={() => navigate('/inventory')} style={{ background: '#fff', border: '2px solid #d4a574', borderRadius: 'var(--r12)', padding: '1rem', cursor: 'pointer', position: 'relative', transition: 'all 0.3s' }}>
+                       <div style={{ width: '3rem', height: '3rem', background: 'linear-gradient(135deg, #d4a574, #c41e3a)', borderRadius: '.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '.8rem' }}>
+                          <span className="material-symbols-outlined fi" style={{ color: '#fff', fontSize: '1.6rem' }}>inventory_2</span>
+                       </div>
+                       <p style={{ fontSize: '.9rem', fontWeight: 900, marginBottom: '.2rem', color: '#2d2d2d' }}>My Stock</p>
+                       <p style={{ fontSize: '.68rem', color: '#666', lineHeight: 1.4, margin: 0 }}>{inventory.length} Ferrero SKUs stocked</p>
+                    </div>
+                    
+                    <div onClick={() => navigate('/rewards')} style={{ background: '#fff', border: '2px solid #d4a574', borderRadius: 'var(--r12)', padding: '1rem', cursor: 'pointer', position: 'relative', transition: 'all 0.3s' }}>
+                       <div style={{ width: '3rem', height: '3rem', background: 'rgba(212,165,116,.15)', borderRadius: '.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '.8rem' }}>
+                          <span className="material-symbols-outlined fi" style={{ color: '#d4a574', fontSize: '1.6rem' }}>featured_seasonal_and_gifts</span>
+                       </div>
+                       <p style={{ fontSize: '.9rem', fontWeight: 900, marginBottom: '.2rem', color: '#2d2d2d' }}>Rewards Store</p>
+                       <p style={{ fontSize: '.68rem', color: '#666', lineHeight: 1.4, margin: 0 }}>{pointCredits.toLocaleString('en-IN')} points available</p>
+                    </div>
+                 </div>
 
-                <div onClick={() => navigate('/buy-from-dist')} style={{ background: 'linear-gradient(135deg, rgba(212,165,116,.1), rgba(196,30,58,.05))', border: '2px solid #d4a574', borderRadius: 'var(--r12)', padding: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '.8rem', transition: 'all 0.3s' }}>
-                   <div style={{ width: '2.5rem', height: '2.5rem', background: '#d4a574', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span className="material-symbols-outlined fi" style={{ color: '#fff', fontSize: '1.3rem' }}>local_shipping</span>
-                   </div>
-                   <div>
-                      <p style={{ fontSize: '.95rem', fontWeight: 900, color: '#d4a574', marginBottom: '.1rem', margin: 0 }}>Order from Distributor</p>
-                      <p style={{ fontSize: '.7rem', color: '#666', margin: 0 }}>Restock inventory directly from suppliers</p>
-                   </div>
-                </div>
+                 <div onClick={() => setShowTargetsModal(true)} style={{ background: 'linear-gradient(135deg, rgba(212,165,116,.1), rgba(196,30,58,.05))', border: '2px solid #d4a574', borderRadius: 'var(--r12)', padding: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '.8rem', transition: 'all 0.3s' }}>
+                    <div style={{ width: '2.5rem', height: '2.5rem', background: '#d4a574', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                       <span className="material-symbols-outlined fi" style={{ color: '#fff', fontSize: '1.3rem' }}>target</span>
+                    </div>
+                    <div>
+                       <p style={{ fontSize: '.95rem', fontWeight: 900, color: '#d4a574', margin: 0 }}>Monthly Restock Targets</p>
+                       <p style={{ fontSize: '.7rem', color: '#666', margin: 0 }}>Auto-advances when Sub-DB representative uploads bills</p>
+                    </div>
+                 </div>
 
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '.6rem' }}>
-                   <div onClick={() => navigate('/earnings')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
-                      <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(160,210,255,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--td)', fontSize: '1.1rem' }}>bar_chart</span></div>
-                      <span style={{ fontSize: '.65rem', fontWeight: 700, color: 'var(--t2)' }}>Earnings</span>
-                   </div>
-                   <div onClick={() => navigate('/inventory')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
-                      <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(255,208,96,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--o4)', fontSize: '1.1rem' }}>inventory</span></div>
-                      <span style={{ fontSize: '.65rem', fontWeight: 700, color: 'var(--t2)' }}>Stock</span>
-                   </div>
-                   <div onClick={() => navigate('/assistant')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
-                      <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(212,165,116,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--g4)', fontSize: '1.1rem' }}>auto_awesome</span></div>
-                      <span style={{ fontSize: '.65rem', fontWeight: 700, color: 'var(--t2)' }}>Assistant</span>
-                   </div>
-                   <div onClick={() => navigate('/settings')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
-                      <div style={{ width: '2.2rem', height: '2.2rem', background: 'var(--bg3)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--o4)', fontSize: '1.1rem' }}>settings</span></div>
-                      <span style={{ fontSize: '.65rem', fontWeight: 700, color: 'var(--t2)' }}>Settings</span>
-                   </div>
-                </div>
-             </div>
+                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '.6rem' }}>
+                    <div onClick={() => navigate('/earnings')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
+                       <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(160,210,255,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--td)', fontSize: '1.1rem' }}>bar_chart</span></div>
+                       <span style={{ fontSize: '.65rem', fontWeight: 700, color: 'var(--t2)' }}>Earnings</span>
+                    </div>
+                    <div onClick={() => navigate('/assistant')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
+                       <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(212,165,116,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--g4)', fontSize: '1.1rem' }}>auto_awesome</span></div>
+                       <span style={{ fontSize: '.65rem', fontWeight: 700, color: 'var(--t2)' }}>Assistant</span>
+                    </div>
+                    <div onClick={() => navigate('/settings')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
+                       <div style={{ width: '2.2rem', height: '2.2rem', background: 'var(--bg3)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--o4)', fontSize: '1.1rem' }}>settings</span></div>
+                       <span style={{ fontSize: '.65rem', fontWeight: 700, color: 'var(--t2)' }}>Settings</span>
+                    </div>
+                 </div>
+              </div>
 
              {/* Chart */}
              <div className="au d3" style={{ marginBottom: '1.5rem' }}>

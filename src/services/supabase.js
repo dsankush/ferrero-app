@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // --- Hardcoded fallback credentials (used if .env is not loaded by Vite) ---
-const FALLBACK_URL = 'https://ocuyqezffpapmrwzficc.supabase.co';
-const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jdXlxZXpmZnBhcG1yd3pmaWNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNDUxMTIsImV4cCI6MjA5NTYyMTExMn0.eT3K3jYKaqzMs7TGYVSoa0W8tUJVn4Rne7VmIkEgP28';
+const FALLBACK_URL = 'https://usilapjrdpheezdvtjbi.supabase.co';
+const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzaWxhcGpyZHBoZWV6ZHZ0amJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDA0ODksImV4cCI6MjEwMjcxNjQ4OX0.ucEXn_RJauBEAjW471b0SsuamAQ2hcQoEJ2CAmpcKoI';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim() || FALLBACK_URL;
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim() || FALLBACK_KEY;

@@ -1,0 +1,8 @@
+Retailer Shop Name,Owner Name,City,Zone,Reporting ASM,Sub-DB Field Rep,June Restock Boxes,June Spend (INR),June Target %,July Restock Boxes,July Spend (INR),July Target %,August Restock Boxes,August Spend (INR),August Target %,3-Month Total Boxes,3-Month Total Spend (INR),3-Month Total Points,Avg Quota %,PAN Number,194R KYC Status
+"Kumar Sweet House","Ramesh Kumar",Indore,Central,"Vikram Malhotra","Rajesh Sharma (EMP-4821)",26,29120,87%,34,38080,100%,38,42560,109%,98,109760,2450,99%,ABCDE1234F,Verified
+"Agrawal Mishthan Bhandar","Sanjay Agrawal",Indore,Central,"Vikram Malhotra","Rajesh Sharma (EMP-4821)",22,24640,79%,28,31360,93%,31,34720,97%,81,90720,2025,90%,BCDEF2345G,Verified
+"Chhappan Sweets","Nitin Jain",Bhopal,Central,"Vikram Malhotra","Rajesh Sharma (EMP-4821)",20,22400,80%,25,28000,90%,29,32480,97%,74,82880,1850,89%,CDEFG3456H,Verified
+"Bikanervala South Ex","Harish Bikaneri",New Delhi,North,"Amitabh Verma","Suresh Yadav (EMP-5104)",45,50400,90%,55,61600,105%,62,69440,113%,162,181440,4050,103%,DEFGH4567I,Verified
+"Haldiram Sweets Connaught","Anil Haldiram",New Delhi,North,"Amitabh Verma","Suresh Yadav (EMP-5104)",50,56000,91%,60,67200,100%,68,76160,105%,178,199360,4450,99%,EFGHI5678J,Verified
+"Chitale Bandhu Mithai","Milind Chitale",Pune,West,"Rohan Deshmukh","Pravin Kulkarni (EMP-6201)",42,47040,93%,54,60480,108%,64,71680,116%,160,179200,4000,106%,FGHIJ6789K,Verified
+"Mani Sweets T.Nagar","Venkatesh Iyer",Chennai,South,"Karthik Raman","Arun Murugan (EMP-7312)",41,45920,89%,60,67200,111%,73,81760,122%,174,194880,4350,107%,GHIJK7890L,Verified

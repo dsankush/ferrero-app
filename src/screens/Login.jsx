@@ -15,6 +15,10 @@ export const Login = () => {
   const [otp, setOtp] = useState('');
 
   const handleRoleSelect = (selectedRole) => {
+    if (selectedRole === 'subdb') {
+      navigate('/subdb_platform/login');
+      return;
+    }
     setUser(prev => ({ ...prev, role: selectedRole }));
     setStep(1);
   };
@@ -38,21 +42,20 @@ export const Login = () => {
 
   const handleVerifyOTP = async () => {
     if (otp === '1234' || otp.length === 4) {
-      const role = user?.role || 'retailer';
-      const isDist = role === 'distributor';
+      const role = 'retailer';
       
       try {
         showToast('⏳ Authenticating...');
-        const loggedUser = await loginUser(phone || '9876543210', role, isNewUser);
+        await loginUser(phone || '9876543210', role, isNewUser);
         
         showToast('✅ Verified!');
         sessionStorage.setItem('counterOS_tab_role', role);
         
         setTimeout(() => {
           if (isNewUser) {
-            navigate(isDist ? '/setup/distributor' : '/setup/shop');
+            navigate('/setup/shop');
           } else {
-            navigate(isDist ? '/distributor-home' : '/home');
+            navigate('/home');
           }
         }, 500);
       } catch (e) {
@@ -63,16 +66,16 @@ export const Login = () => {
         setUser(prev => ({
           ...prev,
           phone: phone || '9876543210',
-          name: isDist ? 'Rajesh Gupta' : 'Ramesh Kumar',
-          shop: isDist ? 'Gupta Ferrero Rocher Wholesaler' : 'Kumar Sweet House',
-          loc: isDist ? 'Indore, MP' : 'Khetgaon, MP',
+          name: 'Ramesh Kumar',
+          shop: 'Kumar Sweet House',
+          loc: 'Khetgaon, MP',
           role: role
         }));
         setTimeout(() => {
           if (isNewUser) {
-            navigate(isDist ? '/setup/distributor' : '/setup/shop');
+            navigate('/setup/shop');
           } else {
-            navigate(isDist ? '/distributor-home' : '/home');
+            navigate('/home');
           }
         }, 500);
       }
@@ -153,20 +156,33 @@ export const Login = () => {
                   </div>
                   <div>
                     <p style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--t1)' }}>I am a Retailer</p>
-                    <p style={{ fontSize: '.8rem', color: 'var(--t3)' }}>Manage shop, buy from distributors</p>
+                    <p style={{ fontSize: '.8rem', color: 'var(--t3)' }}>Sweet shop / Kirana store owner</p>
                   </div>
                 </div>
 
                 <div 
-                  onClick={() => handleRoleSelect('distributor')}
+                  onClick={() => handleRoleSelect('subdb')}
                   style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--bdr2)', padding: '1.5rem', borderRadius: 'var(--r12)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem' }}
                 >
-                  <div style={{ width: '3rem', height: '3rem', background: 'rgba(255,208,96,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span className="material-symbols-outlined fi" style={{ color: 'var(--o4)', fontSize: '1.5rem' }}>local_shipping</span>
+                  <div style={{ width: '3rem', height: '3rem', background: 'rgba(212,165,116,0.15)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="material-symbols-outlined fi" style={{ color: 'var(--g4)', fontSize: '1.5rem' }}>document_scanner</span>
                   </div>
                   <div>
-                    <p style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--t1)' }}>I am a Distributor</p>
-                    <p style={{ fontSize: '.8rem', color: 'var(--t3)' }}>Manage inventory, sell to retailers</p>
+                    <p style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--t1)' }}>I am a Sub-DB Representative</p>
+                    <p style={{ fontSize: '.8rem', color: 'var(--t3)' }}>Ferrero field rep · Upload retailer bills</p>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => navigate('/dashboard')}
+                  style={{ background: 'rgba(212,165,116,0.06)', border: '1.5px solid #d4a574', padding: '1.5rem', borderRadius: 'var(--r12)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem' }}
+                >
+                  <div style={{ width: '3rem', height: '3rem', background: 'linear-gradient(135deg, #d4a574, #c41e3a)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="material-symbols-outlined fi" style={{ color: '#fff', fontSize: '1.5rem' }}>analytics</span>
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--g4)' }}>Company Executive Portal</p>
+                    <p style={{ fontSize: '.8rem', color: 'var(--t2)' }}>Desktop analytics, Sub-DB &amp; ASM hierarchy</p>
                   </div>
                 </div>
               </div>

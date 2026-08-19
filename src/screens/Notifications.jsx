@@ -31,7 +31,7 @@ export const Notifications = () => {
 
   return (
     <div className="screen active">
-      <Header title="Notifications" backTo={user.role === 'retailer' ? '/home' : '/distributor-home'} />
+      <Header title="Notifications" backTo="/home" />
 
       <div className="scroller" style={{ padding: '1rem', paddingBottom: '6rem' }}>
         {myNotifs.length === 0 ? (

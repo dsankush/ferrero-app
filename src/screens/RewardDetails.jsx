@@ -73,6 +73,8 @@ export const RewardDetails = () => {
   const userHasEnoughPoints = pointCredits >= reward.points_required;
   const remainingPoints = Math.max(0, pointCredits - reward.points_required);
 
+  const isKycComplete = Boolean((kycDoc && kycDoc.pan_number) || user?.pan_number || user?.is_kyc_verified);
+
   const handleOpenCalculator = () => {
     if (!userHasEnoughPoints) {
       showToast('❌ Insufficient points balance for this reward', 'error');
@@ -84,54 +86,41 @@ export const RewardDetails = () => {
   const handleConfirmRedeem = async () => {
     if (isSubmitting) return;
 
-    // Validation for 194R KYC
     let kycPayload = null;
-    if (is194r) {
-      const hasPreExistingKyc = (kycDoc && kycDoc.pan_number) || user?.pan_number;
-      if (!hasPreExistingKyc) {
-        if (!panNumber || panNumber.trim().length !== 10) {
-          showToast('⚠️ Please enter a valid 10-character PAN number', 'error');
-          return;
-        }
-        if (!retailerName || retailerName.trim() === '') {
-          showToast('⚠️ Please enter your Retailer Name', 'error');
-          return;
-        }
-        if (!mobileNumber || mobileNumber.trim() === '') {
-          showToast('⚠️ Please enter your Mobile Number', 'error');
-          return;
-        }
-        if (!address || address.trim() === '') {
-          showToast('⚠️ Please enter your Shop Address', 'error');
-          return;
-        }
-        if (!idProofName) {
-          showToast('⚠️ Please upload a simulated Identity Proof', 'error');
-          return;
-        }
-        if (!taxDeclApproved) {
-          showToast('⚠️ Please check the tax declaration box', 'error');
-          return;
-        }
-
-        kycPayload = {
-          pan_number: panNumber.toUpperCase(),
-          gst_number: gstNumber ? gstNumber.toUpperCase() : null,
-          retailer_name: retailerName,
-          mobile_number: mobileNumber,
-          address: address,
-          id_proof_url: idProofName
-        };
-      } else if (!kycDoc && user?.pan_number) {
-        kycPayload = {
-          pan_number: user.pan_number.toUpperCase(),
-          gst_number: user.gst_number ? user.gst_number.toUpperCase() : null,
-          retailer_name: user.name,
-          mobile_number: user.phone,
-          address: user.loc || 'Khetgaon, MP',
-          id_proof_url: 'profile_onboarded_kyc.pdf'
-        };
+    if (!isKycComplete) {
+      if (!panNumber || panNumber.trim().length !== 10) {
+        showToast('⚠️ Please enter a valid 10-character PAN number', 'error');
+        return;
       }
+      if (!retailerName || retailerName.trim() === '') {
+        showToast('⚠️ Please enter your Retailer Name', 'error');
+        return;
+      }
+      if (!mobileNumber || mobileNumber.trim() === '') {
+        showToast('⚠️ Please enter your Mobile Number', 'error');
+        return;
+      }
+      if (!address || address.trim() === '') {
+        showToast('⚠️ Please enter your Shop Address', 'error');
+        return;
+      }
+      if (!idProofName) {
+        showToast('⚠️ Please upload a simulated Identity Proof', 'error');
+        return;
+      }
+      if (!taxDeclApproved) {
+        showToast('⚠️ Please check the declaration checkbox', 'error');
+        return;
+      }
+
+      kycPayload = {
+        pan_number: panNumber.toUpperCase(),
+        gst_number: gstNumber ? gstNumber.toUpperCase() : null,
+        retailer_name: retailerName,
+        mobile_number: mobileNumber,
+        address: address,
+        id_proof_url: idProofName
+      };
     }
 
     setIsSubmitting(true);
@@ -139,7 +128,6 @@ export const RewardDetails = () => {
     try {
       const result = await redeemReward(reward, kycPayload);
       if (result) {
-        // Redirect to success screen with parameters
         navigate('/rewards/success', { 
           state: { 
             rewardName: reward.title,
@@ -150,7 +138,7 @@ export const RewardDetails = () => {
             rewardType: reward.reward_type,
             cashbackAmount: result.cashbackAmount,
             is194r: is194r,
-            complianceStatus: result.complianceStatus
+            complianceStatus: result.complianceStatus || 'Approved'
           } 
         });
       }
@@ -174,7 +162,6 @@ export const RewardDetails = () => {
 
       <div className="scroller" style={{ padding: '1.25rem', paddingBottom: '7rem' }}>
         
-        {/* REWARD HERO PANEL */}
         <div className="au d1" style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r16)', padding: '2rem 1.5rem', textAlign: 'center', marginBottom: '1.5rem', position: 'relative' }}>
           <div style={{ 
             width: '4.5rem', height: '4.5rem', 
@@ -197,12 +184,11 @@ export const RewardDetails = () => {
 
           {is194r && (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(212,165,116,0.12)', border: '1px solid #d4a574', padding: '.3rem .6rem', borderRadius: '8px', marginTop: '1rem', fontSize: '.75rem', color: 'var(--g4)', fontWeight: 800 }}>
-              <span>📋 Section 194R Regulated</span>
+              <span>📋 Section 194R Regulated (10% TDS)</span>
             </div>
           )}
         </div>
 
-        {/* DETAILS SPEC LIST */}
         <div className="au d2" style={{ display: 'flex', flexDirection: 'column', gap: '.65rem', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '.8rem 1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)' }}>
             <span style={{ fontSize: '.8rem', color: 'var(--t3)' }}>Reward Type</span>
@@ -216,38 +202,17 @@ export const RewardDetails = () => {
           )}
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '.8rem 1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)' }}>
             <span style={{ fontSize: '.8rem', color: 'var(--t3)' }}>Validity</span>
-            <span style={{ fontSize: '.8rem', fontWeight: 800, color: 'var(--t1)' }}>{reward.validity_days} days after claim</span>
+            <span style={{ fontSize: '.8rem', fontWeight: 800, color: 'var(--t1)' }}>{reward.validity_days || 90} days after claim</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '.8rem 1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)' }}>
-            <span style={{ fontSize: '.8rem', color: 'var(--t3)' }}>Points Cost</span>
-            <span style={{ fontSize: '.8rem', fontWeight: 900, color: 'var(--g4)' }}>{reward.points_required.toLocaleString('en-IN')} pts</span>
+            <span style={{ fontSize: '.8rem', color: 'var(--t3)' }}>KYC Status</span>
+            <span style={{ fontSize: '.8rem', fontWeight: 800, color: isKycComplete ? '#10b981' : '#ffd060' }}>
+              {isKycComplete ? '✓ Verified (Instant Claim)' : '⚡ Setup on First Claim'}
+            </span>
           </div>
         </div>
-
-        {/* TERMS & USAGE SECTION */}
-        <div className="au d3" style={{ background: 'rgba(212,165,116,0.03)', border: '1px solid var(--bdr)', borderRadius: 'var(--r16)', padding: '1.25rem', marginBottom: '1.5rem' }}>
-          <h3 style={{ fontSize: '.88rem', fontWeight: 800, color: 'var(--g4)', marginBottom: '.6rem' }}>📜 Terms & Conditions</h3>
-          <p style={{ fontSize: '.78rem', color: 'var(--t2)', lineHeight: 1.6, margin: 0 }}>
-            {is194r 
-              ? 'This reward is governed under Section 194R of the Indian Income Tax Act. Release is subject to PAN KYC approval. Points are deducted upon redemption but code/delivery is held until tax compliance verification is completed.'
-              : reward.terms_conditions || 'This reward is non-transferable and can only be used inside the CounterOS retailer system. Once redeemed, points cannot be refunded or rolled back.'}
-          </p>
-          
-          <h3 style={{ fontSize: '.88rem', fontWeight: 800, color: 'var(--g4)', marginTop: '1.25rem', marginBottom: '.6rem' }}>💡 How to Use</h3>
-          <p style={{ fontSize: '.78rem', color: 'var(--t2)', lineHeight: 1.6, margin: 0 }}>
-            {is194r
-              ? '1. Confirm redemption and pay points. 2. Submit PAN & shop details. 3. Admin verifies details (takes up to 24 hrs). 4. Reward code releases in your My Rewards Vault.'
-              : reward.reward_type === 'cashback' 
-              ? 'Click Redeem. The cashback value will be instantly credited to your wallet balance. You can check the transaction in the wallet history.' 
-              : reward.reward_type === 'partner' 
-              ? 'Click Redeem. Copy the Amazon/Flipkart voucher code and paste it on the partner merchant site during purchase, or click "Use Now" to redeem directly.' 
-              : 'Click Redeem. Use the generated coupon code during distributor restock checkout for discounts.'}
-          </p>
-        </div>
-
       </div>
 
-      {/* FIXED FOOT PANEL WITH CTA */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '1.25rem', background: 'var(--bg1)', borderTop: '1px solid var(--bdr)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 100 }}>
         <div>
           <p style={{ fontSize: '.65rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700 }}>Your Points</p>
@@ -273,176 +238,166 @@ export const RewardDetails = () => {
         )}
       </div>
 
-      {/* CALCULATOR / CONFIRMATION MODAL BOTTOM SHEET */}
       {showCalculator && (
         <div className="buddy-panel" onClick={() => !isSubmitting && setShowCalculator(false)}>
           <div className="buddy-content" onClick={e => e.stopPropagation()} style={{ height: 'auto', maxHeight: '90vh', overflowY: 'auto', padding: '1.75rem 1.25rem', background: '#1d120d', borderTop: '2.5px solid var(--g4)', borderRadius: '20px 20px 0 0' }}>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--g4)' }}>
-                {is194r ? '📋 Section 194R Compliance Flow' : '🧾 Real-Time Calculator'}
-              </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--g4)', margin: 0 }}>
+                  🧾 Claim Reward
+                </h3>
+                <p style={{ fontSize: '.72rem', color: 'var(--t3)', margin: '.2rem 0 0 0' }}>
+                  {isKycComplete ? 'Direct 1-Click Instant Redemption' : '1-Time KYC Setup Required'}
+                </p>
+              </div>
               <button disabled={isSubmitting} onClick={() => setShowCalculator(false)} style={{ background: 'transparent', border: 'none', color: 'var(--t3)', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
             </div>
 
-            {/* Calculations layout */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '.85rem', marginBottom: '1.5rem', background: 'var(--bg3)', padding: '1.25rem', borderRadius: '16px', border: '1px solid var(--bdr)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.9rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '.85rem', marginBottom: '1.25rem', background: 'var(--bg3)', padding: '1.1rem', borderRadius: '16px', border: '1px solid var(--bdr)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem' }}>
                 <span style={{ color: 'var(--t3)' }}>Current Points</span>
                 <span style={{ fontWeight: 700 }}>{pointCredits.toLocaleString('en-IN')} pts</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.9rem', color: '#ef4444' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', color: '#ef4444' }}>
                 <span>Reward Cost</span>
                 <span style={{ fontWeight: 800 }}>- {reward.points_required.toLocaleString('en-IN')} pts</span>
               </div>
-              <div style={{ height: '1px', background: 'var(--bdr2)', margin: '.2rem 0' }} />
+              <div style={{ height: '1px', background: 'var(--bdr2)', margin: '.1rem 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: 900 }}>
                 <span style={{ color: 'var(--g4)' }}>Remaining Balance</span>
                 <span style={{ color: 'var(--g4)', fontFamily: 'var(--fd)' }}>{remainingPoints.toLocaleString('en-IN')} pts</span>
               </div>
             </div>
 
-            {/* Section 194R Tax compliance card */}
             {is194r && (
-              <div style={{ background: 'rgba(212,165,116,0.05)', border: '1px solid rgba(212,165,116,0.3)', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem' }}>
-                <h4 style={{ color: 'var(--g4)', fontWeight: 800, fontSize: '.9rem', marginBottom: '.6rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span>⚖️ TDS Deductible (Section 194R)</span>
+              <div style={{ background: 'rgba(212,165,116,0.05)', border: '1px solid rgba(212,165,116,0.3)', borderRadius: '16px', padding: '1.1rem', marginBottom: '1.25rem' }}>
+                <h4 style={{ color: 'var(--g4)', fontWeight: 800, fontSize: '.88rem', marginBottom: '.4rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>⚖️ Section 194R TDS Benefit</span>
                 </h4>
-                <p style={{ fontSize: '.75rem', color: 'var(--t2)', lineHeight: 1.5, marginBottom: '1rem' }}>
-                  Tax is deducted at source (TDS @ 10%) on benefits or perquisites provided to retailers/channel partners exceeding ₹20,000.
+                <p style={{ fontSize: '.72rem', color: 'var(--t2)', lineHeight: 1.4, marginBottom: '.75rem' }}>
+                  TDS @ 10% is calculated on wholesale perquisites. Your voucher code will be issued directly without delay.
                 </p>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '.6rem', fontSize: '.8rem', background: 'rgba(0,0,0,0.2)', padding: '.8rem', borderRadius: '10px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', fontSize: '.78rem', background: 'rgba(0,0,0,0.2)', padding: '.75rem', borderRadius: '10px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--t3)' }}>Est. Reward Value</span>
                     <strong style={{ color: '#fff' }}>₹{Number(reward.reward_value).toLocaleString('en-IN')}</strong>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ef4444' }}>
-                    <span>TDS (10% Applicable)</span>
+                    <span>TDS Deducted (10%)</span>
                     <strong>₹{tdsAmt.toLocaleString('en-IN')}</strong>
                   </div>
                   <div style={{ height: '1px', background: 'var(--bdr2)' }} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#78f275', fontWeight: 800 }}>
-                    <span>Net Benefit Value</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10b981', fontWeight: 800 }}>
+                    <span>Net Value</span>
                     <span>₹{netBenefitVal.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* KYC Form Collection if 194R & No approved KYC in context */}
-            {is194r && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                {(kycDoc && kycDoc.pan_number) || user?.pan_number ? (
-                  <div style={{ background: 'rgba(120,242,117,.06)', border: '1px solid #78f275', borderRadius: '12px', padding: '1rem', display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-                    <span className="material-symbols-outlined" style={{ color: '#78f275', fontSize: '2rem' }}>verified_user</span>
+            <div style={{ marginBottom: '1.25rem' }}>
+              {isKycComplete ? (
+                <div style={{ background: 'rgba(16,185,129,.08)', border: '1.5px solid #10b981', borderRadius: '12px', padding: '1rem', display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+                  <span className="material-symbols-outlined" style={{ color: '#10b981', fontSize: '2rem' }}>verified_user</span>
+                  <div>
+                    <h4 style={{ fontSize: '.85rem', fontWeight: 800, color: '#fff', margin: 0 }}>Verified KYC Linked</h4>
+                    <p style={{ fontSize: '.72rem', color: 'var(--t3)', margin: '.15rem 0 0 0' }}>
+                      PAN: <strong style={{ color: 'var(--g4)' }}>{kycDoc?.pan_number || user?.pan_number}</strong> ({kycDoc?.retailer_name || user?.name})
+                    </p>
+                    <p style={{ fontSize: '.65rem', color: '#10b981', margin: '.2rem 0 0 0', fontWeight: 700 }}>
+                      ⚡ 1-Click Instant Voucher Release Enabled
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ border: '1px solid var(--bdr)', borderRadius: '16px', padding: '1.25rem', background: 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ background: 'rgba(212,165,116,0.1)', border: '1px solid #d4a574', borderRadius: '10px', padding: '.75rem', marginBottom: '1rem' }}>
+                    <p style={{ fontSize: '.75rem', fontWeight: 800, color: 'var(--g4)', margin: 0 }}>⚡ 1-Time KYC Setup Required</p>
+                    <p style={{ fontSize: '.68rem', color: 'var(--t2)', margin: '.25rem 0 0 0', lineHeight: 1.4 }}>
+                      Since KYC is not mandatory during signup, please enter your PAN once now. It will be <strong>permanently saved</strong> to your profile for all future instant redemptions!
+                    </p>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '.85rem' }}>
                     <div>
-                      <h4 style={{ fontSize: '.85rem', fontWeight: 800, color: '#fff', margin: 0 }}>KYC Profile Linked</h4>
-                      <p style={{ fontSize: '.75rem', color: 'var(--t3)', margin: '.1rem 0 0 0' }}>
-                        PAN: <strong style={{ color: 'var(--g4)' }}>{kycDoc?.pan_number || user.pan_number}</strong> ({kycDoc?.retailer_name || user.name})
-                      </p>
+                      <label style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '.3rem' }}>PAN Number *</label>
+                      <input 
+                        type="text" 
+                        maxLength="10"
+                        placeholder="ABCDE1234F"
+                        value={panNumber}
+                        onChange={e => setPanNumber(e.target.value.toUpperCase())}
+                        style={{ width: '100%', background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: '8px', padding: '.65rem .8rem', color: '#fff', fontSize: '.85rem', outline: 'none', textTransform: 'uppercase' }}
+                      />
                     </div>
-                  </div>
-                ) : (
-                  <div style={{ border: '1px solid var(--bdr)', borderRadius: '16px', padding: '1.25rem', background: 'rgba(255,255,255,0.02)' }}>
-                    <h4 style={{ color: '#fff', fontWeight: 800, fontSize: '.9rem', marginBottom: '1rem' }}>📝 KYC Verification Form</h4>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '.85rem' }}>
-                      <div>
-                        <label style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '.3rem' }}>PAN Number *</label>
-                        <input 
-                          type="text" 
-                          maxLength="10"
-                          placeholder="ABCDE1234F"
-                          value={panNumber}
-                          onChange={e => setPanNumber(e.target.value.toUpperCase())}
-                          style={{ width: '100%', background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: '8px', padding: '.65rem .8rem', color: '#fff', fontSize: '.85rem', outline: 'none', textTransform: 'uppercase' }}
-                        />
-                      </div>
 
-                      <div>
-                        <label style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '.3rem' }}>GST Number (Optional)</label>
-                        <input 
-                          type="text" 
-                          maxLength="15"
-                          placeholder="22ABCDE1234F1Z5"
-                          value={gstNumber}
-                          onChange={e => setGstNumber(e.target.value.toUpperCase())}
-                          style={{ width: '100%', background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: '8px', padding: '.65rem .8rem', color: '#fff', fontSize: '.85rem', outline: 'none', textTransform: 'uppercase' }}
-                        />
-                      </div>
+                    <div>
+                      <label style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '.3rem' }}>Retailer / Legal Name *</label>
+                      <input 
+                        type="text" 
+                        placeholder="Ramesh Kumar"
+                        value={retailerName}
+                        onChange={e => setRetailerName(e.target.value)}
+                        style={{ width: '100%', background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: '8px', padding: '.65rem .8rem', color: '#fff', fontSize: '.85rem', outline: 'none' }}
+                      />
+                    </div>
 
-                      <div>
-                        <label style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '.3rem' }}>Retailer Name *</label>
-                        <input 
-                          type="text" 
-                          placeholder="Ramesh Kumar"
-                          value={retailerName}
-                          onChange={e => setRetailerName(e.target.value)}
-                          style={{ width: '100%', background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: '8px', padding: '.65rem .8rem', color: '#fff', fontSize: '.85rem', outline: 'none' }}
-                        />
-                      </div>
+                    <div>
+                      <label style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '.3rem' }}>Mobile Number *</label>
+                      <input 
+                        type="tel" 
+                        placeholder="9900000001"
+                        value={mobileNumber}
+                        onChange={e => setMobileNumber(e.target.value)}
+                        style={{ width: '100%', background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: '8px', padding: '.65rem .8rem', color: '#fff', fontSize: '.85rem', outline: 'none' }}
+                      />
+                    </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '.85rem' }}>
-                        <div>
-                          <label style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '.3rem' }}>Mobile Number *</label>
-                          <input 
-                            type="tel" 
-                            placeholder="9900000001"
-                            value={mobileNumber}
-                            onChange={e => setMobileNumber(e.target.value)}
-                            style={{ width: '100%', background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: '8px', padding: '.65rem .8rem', color: '#fff', fontSize: '.85rem', outline: 'none' }}
-                          />
-                        </div>
-                      </div>
+                    <div>
+                      <label style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '.3rem' }}>Shop Address *</label>
+                      <textarea 
+                        placeholder="Shop No. 12, Main Market, Khetgaon, MP"
+                        value={address}
+                        onChange={e => setAddress(e.target.value)}
+                        rows="2"
+                        style={{ width: '100%', background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: '8px', padding: '.65rem .8rem', color: '#fff', fontSize: '.85rem', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
+                      />
+                    </div>
 
-                      <div>
-                        <label style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '.3rem' }}>Shop Address *</label>
-                        <textarea 
-                          placeholder="Shop No. 12, Main Market, Khetgaon, MP"
-                          value={address}
-                          onChange={e => setAddress(e.target.value)}
-                          rows="2"
-                          style={{ width: '100%', background: 'var(--inp)', border: '1.5px solid var(--bdr2)', borderRadius: '8px', padding: '.65rem .8rem', color: '#fff', fontSize: '.85rem', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
-                        />
-                      </div>
-
-                      {/* Identity Proof Upload Simulation */}
-                      <div>
-                        <label style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '.3rem' }}>Identity Proof (PAN Card / Aadhaar) *</label>
-                        <div 
-                          onClick={handleSimulateUpload}
-                          style={{ border: '1.5px dashed var(--bdr)', background: 'rgba(255,255,255,0.01)', borderRadius: '8px', padding: '1rem', textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.4rem' }}
-                        >
-                          <span className="material-symbols-outlined" style={{ color: 'var(--g4)', fontSize: '1.8rem' }}>
-                            {idProofName ? 'file_present' : 'cloud_upload'}
-                          </span>
-                          <span style={{ fontSize: '.75rem', fontWeight: 700, color: idProofName ? '#78f275' : 'var(--t2)' }}>
-                            {idProofName ? idProofName : 'Click to Upload Identity Proof'}
-                          </span>
-                          <span style={{ fontSize: '.62rem', color: 'var(--t3)' }}>PDF, JPG, PNG (Max 5MB)</span>
-                        </div>
-                      </div>
-
-                      {/* Declaration Checkbox */}
-                      <label style={{ display: 'flex', gap: '.5rem', alignItems: 'start', cursor: 'pointer', userSelect: 'none', marginTop: '.4rem' }}>
-                        <input 
-                          type="checkbox" 
-                          checked={taxDeclApproved} 
-                          onChange={e => setTaxDeclApproved(e.target.checked)}
-                          style={{ marginTop: '.15rem', cursor: 'pointer' }}
-                        />
-                        <span style={{ fontSize: '.72rem', color: 'var(--t2)', lineHeight: 1.4 }}>
-                          I hereby declare that the details provided are correct and I authorize the deduction of points and TDS filing as per Income Tax Section 194R.
+                    <div>
+                      <label style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, display: 'block', marginBottom: '.3rem' }}>Identity Proof (PAN Card / Aadhaar) *</label>
+                      <div 
+                        onClick={handleSimulateUpload}
+                        style={{ border: '1.5px dashed var(--bdr)', background: 'rgba(255,255,255,0.01)', borderRadius: '8px', padding: '1rem', textAlign: 'center', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.4rem' }}
+                      >
+                        <span className="material-symbols-outlined" style={{ color: 'var(--g4)', fontSize: '1.8rem' }}>
+                          {idProofName ? 'file_present' : 'cloud_upload'}
                         </span>
-                      </label>
+                        <span style={{ fontSize: '.75rem', fontWeight: 700, color: idProofName ? '#10b981' : 'var(--t2)' }}>
+                          {idProofName ? idProofName : 'Click to Upload Identity Proof'}
+                        </span>
+                        <span style={{ fontSize: '.62rem', color: 'var(--t3)' }}>PDF, JPG, PNG (Max 5MB)</span>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
 
-            {/* Confirm Actions */}
+                    <label style={{ display: 'flex', gap: '.5rem', alignItems: 'start', cursor: 'pointer', userSelect: 'none', marginTop: '.4rem' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={taxDeclApproved} 
+                        onChange={e => setTaxDeclApproved(e.target.checked)}
+                        style={{ marginTop: '.15rem', cursor: 'pointer' }}
+                      />
+                      <span style={{ fontSize: '.72rem', color: 'var(--t2)', lineHeight: 1.4 }}>
+                        I declare that the details provided are correct and I authorize the deduction of points and TDS filing as per Income Tax regulations.
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div style={{ display: 'flex', gap: '.8rem', marginTop: '1rem' }}>
               <button
                 onClick={() => setShowCalculator(false)}
@@ -459,10 +414,10 @@ export const RewardDetails = () => {
                 style={{ flex: 2, background: 'linear-gradient(135deg, #d4a574, #c41e3a)' }}
               >
                 {isSubmitting 
-                  ? 'Confirming...' 
-                  : is194r && !(kycDoc && kycDoc.pan_number)
-                  ? 'Submit KYC & Redeem'
-                  : 'Confirm Redemption'}
+                  ? 'Processing...' 
+                  : !isKycComplete
+                  ? 'Save KYC & Redeem'
+                  : 'Confirm & Redeem (Instant Voucher)'}
               </button>
             </div>
             

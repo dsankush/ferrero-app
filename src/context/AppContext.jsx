@@ -5,14 +5,165 @@ import { Intelligence } from '../services/intelligence';
 const AppContext = createContext();
 
 const DUMMY_REWARDS = [
-  { id: '1', title: '₹10 Instant Cashback', description: 'Instant cashback credited directly to your shop wallet. No minimum purchase required.', points_required: 100, category: 'cashback', reward_type: 'cashback', partner_name: 'Wallet Cash', terms_conditions: 'Instant credit. Non-refundable. Limits: Max 5 per day.', validity_days: 365, available_inventory: 1000 },
-  { id: '2', title: '₹50 Fuel Voucher', description: 'Save on your delivery transportation fuel. Valid at all major petrol pumps.', points_required: 500, category: 'travel', reward_type: 'voucher', partner_name: 'IndianOil', terms_conditions: 'Present voucher code at checkout counter. Valid on petrol/diesel.', validity_days: 90, available_inventory: 200 },
-  { id: '3', title: '₹100 Amazon Gift Card', description: 'Shop anything on Amazon India. Fully digital voucher code instantly delivered.', points_required: 1000, category: 'gift_card', reward_type: 'partner', partner_name: 'Amazon India', terms_conditions: 'Can be added directly to Amazon Pay balance. Valid for 1 year.', validity_days: 365, available_inventory: 500 },
-  { id: '4', title: '₹200 Wholesale Discount', description: 'Save on your next order from Rajesh Wholesaler. Exclusive business benefit.', points_required: 2000, category: 'business', reward_type: 'coupon', partner_name: 'CounterOS Wholesale', terms_conditions: 'Use code during Buy From Distributor checkout. Minimum order value ₹5,000.', validity_days: 60, available_inventory: 150 },
-  { id: '5', title: '₹500 Supermarket Cashback', description: 'High-value cashback reward for premium retail stores.', points_required: 4000, category: 'cashback', reward_type: 'cashback', partner_name: 'Wallet Cash', terms_conditions: 'Will be instantly credited to your wallet balance upon redemption.', validity_days: 365, available_inventory: 100 },
-  { id: '6', title: '₹1,000 Flipkart Gift Card', description: 'Redeemable on Flipkart India towards millions of products.', points_required: 8000, category: 'gift_card', reward_type: 'partner', partner_name: 'Flipkart', terms_conditions: 'Flipkart terms apply. Cannot be exchanged for cash.', validity_days: 365, available_inventory: 80 },
-  { id: '7', title: 'Smartphone Voucher', description: 'Get ₹2,000 off on select business smartphones. Upgrade your shop communication.', points_required: 15000, category: 'electronics', reward_type: 'partner', partner_name: 'Mi Store', terms_conditions: 'Applicable on Redmi & Xiaomi business phones. Valid online only.', validity_days: 90, available_inventory: 50 },
-  { id: '8', title: 'Mystery Confectionery Hamper', description: 'Win a special premium selection box of Ferrero Rocher & Raffaello specialties.', points_required: 25000, category: 'lucky_draw', reward_type: 'voucher', partner_name: 'Ferrero India', terms_conditions: 'Hamper will be shipped to your registered shop location. Subject to stock availability.', validity_days: 180, available_inventory: 20 }
+  // ─── TIER 1: RURAL UTILITIES & DIRECT CASH (NO 194R TDS) ───────────────────
+  {
+    id: '1',
+    title: '₹250 Direct UPI / Gramin Bank Cashback',
+    description: 'Instant credit to your shop UPI or Gramin Bank account. 0% deduction.',
+    points_required: 500,
+    reward_value: 250,
+    category: 'cashback',
+    reward_type: 'cashback',
+    partner_name: 'Instant UPI Direct',
+    is_194r_applicable: false,
+    terms_conditions: 'Instant transfer. No TDS deduction required for direct micro cashbacks below compliance threshold.',
+    validity_days: 365,
+    available_inventory: 1000
+  },
+  {
+    id: '2',
+    title: '₹500 Rural Diesel / Petrol Fuel Card',
+    description: 'Valid at IndianOil, HPCL & BPCL pumps for delivery tempos, bikes and generators.',
+    points_required: 1000,
+    reward_value: 500,
+    category: 'travel',
+    reward_type: 'voucher',
+    partner_name: 'IndianOil Rural Fuel',
+    is_194r_applicable: false,
+    terms_conditions: 'Valid on petrol and diesel purchases at 35,000+ pumps across India.',
+    validity_days: 180,
+    available_inventory: 500
+  },
+  {
+    id: '3',
+    title: 'Jio / Airtel 1-Year Shop 5G Data Pack',
+    description: '1-Year unlimited voice + 2GB/day high-speed data for POS billing & smartphone.',
+    points_required: 1800,
+    reward_value: 899,
+    category: 'electronics',
+    reward_type: 'voucher',
+    partner_name: 'Telecom Partner',
+    is_194r_applicable: false,
+    terms_conditions: 'Direct prepaid recharge coupon instantly applied to your mobile number.',
+    validity_days: 365,
+    available_inventory: 400
+  },
+  {
+    id: '4',
+    title: 'Amazon Pay ₹500 E-Gift Voucher',
+    description: 'Shop on Amazon India for household or retail supplies.',
+    points_required: 1000,
+    reward_value: 500,
+    category: 'gift_card',
+    reward_type: 'partner',
+    partner_name: 'Amazon Pay',
+    is_194r_applicable: false,
+    terms_conditions: 'Direct voucher delivery. Can be added to Amazon Pay balance.',
+    validity_days: 365,
+    available_inventory: 500
+  },
+
+  // ─── TIER 2: RURAL SHOP UTILITIES & HOUSEHOLD APPLIANCES (10% TDS - 194R) ──
+  {
+    id: '5',
+    title: 'Havells 16-Inch High-Speed Counter Fan',
+    description: 'Heavy-duty cooling fan for sweet display counter and customer comfort.',
+    points_required: 5000,
+    reward_value: 2500,
+    category: 'appliances',
+    reward_type: 'product',
+    partner_name: 'Havells India',
+    is_194r_applicable: true,
+    terms_conditions: 'Section 194R business perquisite: 10% TDS (₹250) logged with Form 16A credit.',
+    validity_days: 365,
+    available_inventory: 120
+  },
+  {
+    id: '6',
+    title: 'Bajaj 3-Jar Heavy-Duty Commercial Mixer',
+    description: '750W robust copper motor mixer grinder for confectionery paste & sweet prep.',
+    points_required: 7500,
+    reward_value: 3800,
+    category: 'appliances',
+    reward_type: 'product',
+    partner_name: 'Bajaj Electricals',
+    is_194r_applicable: true,
+    terms_conditions: 'Business benefit under Section 194R: 10% TDS (₹380) recorded with tax invoice.',
+    validity_days: 365,
+    available_inventory: 80
+  },
+  {
+    id: '7',
+    title: 'Luminous Solar Inverter & Battery Voucher',
+    description: '₹4,500 power backup voucher to protect confectionery & fridge from power cuts.',
+    points_required: 9000,
+    reward_value: 4500,
+    category: 'appliances',
+    reward_type: 'voucher',
+    partner_name: 'Luminous Power',
+    is_194r_applicable: true,
+    terms_conditions: 'Section 194R applicable: 10% TDS (₹450) deducted. Protects store inventory from spoilage.',
+    validity_days: 365,
+    available_inventory: 50
+  },
+  {
+    id: '8',
+    title: 'Flipkart ₹2,000 Festive Shopping Card',
+    description: 'Festive shopping card for apparel, electronics, and household goods.',
+    points_required: 4000,
+    reward_value: 2000,
+    category: 'gift_card',
+    reward_type: 'partner',
+    partner_name: 'Flipkart',
+    is_194r_applicable: true,
+    terms_conditions: 'Section 194R compliance: 10% TDS (₹200) logged. Requires verified PAN on file.',
+    validity_days: 365,
+    available_inventory: 200
+  },
+
+  // ─── TIER 3: HIGH-VALUE RURAL ASSETS & ASPIRATIONAL REWARDS (194R HIGH VALUE)
+  {
+    id: '9',
+    title: 'Tanishq 24K Gold Coin (₹10,000)',
+    description: 'Certified 999.9 pure gold coin by Tanishq. Festive family prosperity asset.',
+    points_required: 20000,
+    reward_value: 10000,
+    category: 'luxury_gold',
+    reward_type: 'voucher',
+    partner_name: 'Tanishq Jewellers',
+    is_194r_applicable: true,
+    terms_conditions: 'Section 194R High-Value Gold Benefit: 10% TDS (₹1,000) deducted with compliance audit trail.',
+    validity_days: 365,
+    available_inventory: 30
+  },
+  {
+    id: '10',
+    title: 'Samsung 253L Smart Inverter Refrigerator',
+    description: 'Double-door refrigerator with temperature control for confectionery & sweets.',
+    points_required: 45000,
+    reward_value: 32000,
+    category: 'appliances',
+    reward_type: 'product',
+    partner_name: 'Samsung India',
+    is_194r_applicable: true,
+    terms_conditions: 'High-Value Commercial Asset: 10% TDS (₹3,200) deducted under Section 194R with PAN verification.',
+    validity_days: 180,
+    available_inventory: 20
+  },
+  {
+    id: '11',
+    title: 'Hero HF Deluxe / Splendor Bike Bonanza',
+    description: 'Brand new mileage motorcycle for shop goods delivery and family transport.',
+    points_required: 100000,
+    reward_value: 72000,
+    category: 'travel',
+    reward_type: 'product',
+    partner_name: 'Hero MotoCorp',
+    is_194r_applicable: true,
+    terms_conditions: 'Grand Dealer Perquisite under Section 194R: 10% TDS (₹7,200) logged with Form 16A tax certificate.',
+    validity_days: 365,
+    available_inventory: 10
+  }
 ];
 
 const initialUser = { phone: '', name: 'Ramesh Kumar', shop: 'Kumar Sweet House', loc: 'Khetgaon, MP', cat: 'rocher', role: '' };
@@ -353,9 +504,8 @@ export const AppProvider = ({ children }) => {
     }
   }, [user?.role]);
 
-  // Sync tab updates in local testing mode
+  // Sync tab updates in local testing mode & cross-role events
   useEffect(() => {
-    if (isSupabaseConfigured) return;
     const handleStorage = (e) => {
       if (e.key === `counterOS_popup_for_${user?.role}` && e.newValue) {
         try {
@@ -366,8 +516,17 @@ export const AppProvider = ({ children }) => {
           localStorage.removeItem(`counterOS_popup_for_${user?.role}`);
         } catch(e) {}
       }
-      if (e.key === 'counterOS_distOrders' && e.newValue) {
-        setDistOrdersState(JSON.parse(e.newValue));
+      if (e.key === 'counterOS_inventory' && e.newValue) {
+        try { setInventoryState(JSON.parse(e.newValue)); } catch(e) {}
+      }
+      if (e.key === 'counterOS_transactions' && e.newValue) {
+        try { setTransactions(JSON.parse(e.newValue)); } catch(e) {}
+      }
+      if (e.key === 'counterOS_notifications' && e.newValue) {
+        try { setNotificationsState(JSON.parse(e.newValue)); } catch(e) {}
+      }
+      if (e.key === 'counterOS_monthlyTargets' && e.newValue) {
+        try { setMonthlyTargets(JSON.parse(e.newValue)); } catch(e) {}
       }
     };
     window.addEventListener('storage', handleStorage);
@@ -1056,6 +1215,55 @@ export const AppProvider = ({ children }) => {
       })
       .subscribe();
 
+    const inventoryChannel = supabase
+      .channel('realtime-inventory-' + user.id)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory', filter: `user_id=eq.${user.id}` }, async () => {
+        console.log('📦 Realtime Inventory update received');
+        const currentUser = userRef.current;
+        if (!currentUser?.id) return;
+        const { data: dbInv } = await supabase
+          .from('inventory')
+          .select('*')
+          .eq('user_id', currentUser.id);
+        if (dbInv) {
+          setInventoryState(dbInv.map(row => ({
+            id: row.id,
+            code: row.code,
+            name: row.name,
+            cat: row.cat,
+            unit: row.unit,
+            qty: row.qty,
+            buy: Number(row.buy),
+            sell: Number(row.sell),
+            earn: Number(row.earn),
+            mfg: row.mfg,
+            exp: row.exp,
+            businessCat: row.business_cat
+          })));
+        }
+      })
+      .subscribe();
+
+    const txnsChannel = supabase
+      .channel('realtime-transactions-' + user.id)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'transactions', filter: `user_id=eq.${user.id}` }, (payload) => {
+        console.log('💳 Realtime Transaction received:', payload.new);
+        if (payload.new) {
+          const t = payload.new;
+          setTransactions(prev => [{
+            id: t.id,
+            type: t.type,
+            label: t.label,
+            sub: t.sub,
+            amt: t.amt,
+            clr: t.clr,
+            icon: t.icon,
+            date: new Date(t.created_at || Date.now()).toLocaleDateString()
+          }, ...prev]);
+        }
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(ordersChannel);
       supabase.removeChannel(profileChannel);
@@ -1063,6 +1271,8 @@ export const AppProvider = ({ children }) => {
       supabase.removeChannel(redemptionsChannel);
       supabase.removeChannel(kycChannel);
       supabase.removeChannel(targetsChannel);
+      supabase.removeChannel(inventoryChannel);
+      supabase.removeChannel(txnsChannel);
     };
   }, [user?.id, user?.role]);
 
@@ -1794,21 +2004,20 @@ export const AppProvider = ({ children }) => {
   const submitKYC = async (kycData) => {
     if (isSupabaseConfigured && user?.id) {
       try {
+        let result = null;
         const { data: existingKyc } = await supabase
           .from('kyc_documents')
           .select('id')
           .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
+          .single();
 
-        let result;
-        if (existingKyc?.id) {
+        if (existingKyc) {
           const { data, error } = await supabase
             .from('kyc_documents')
             .update({
               ...kycData,
-              pan_verified: true, // Simulated verification
-              kyc_approved: false // Set to false to allow distributor to approve in demo
+              pan_verified: true,
+              kyc_approved: true
             })
             .eq('id', existingKyc.id)
             .select()
@@ -1822,7 +2031,7 @@ export const AppProvider = ({ children }) => {
               user_id: user.id,
               ...kycData,
               pan_verified: true,
-              kyc_approved: false
+              kyc_approved: true
             }])
             .select()
             .single();
@@ -1830,8 +2039,24 @@ export const AppProvider = ({ children }) => {
           result = data;
         }
 
+        // Also update profiles table so PAN is permanently attached
+        await supabase
+          .from('profiles')
+          .update({
+            pan_number: kycData.pan_number,
+            gst_number: kycData.gst_number || null,
+            is_kyc_verified: true
+          })
+          .eq('id', user.id);
+
         setKycDoc(result);
-        showToast('✅ KYC Submitted. Awaiting review.', 'success');
+        setUserState(prev => {
+          const updated = { ...prev, pan_number: kycData.pan_number, gst_number: kycData.gst_number || null, is_kyc_verified: true };
+          saveToStorage('counterOS_user', updated);
+          return updated;
+        });
+
+        showToast('✅ KYC verified & permanently saved to profile!', 'success');
         return result;
       } catch (e) {
         console.error('Failed to submit KYC in Supabase:', e);
@@ -1841,14 +2066,22 @@ export const AppProvider = ({ children }) => {
     } else {
       const mockDoc = {
         id: 'mock-kyc-' + Date.now(),
-        user_id: 'mock-user-id',
+        user_id: user?.id || 'mock-user-id',
         ...kycData,
         pan_verified: true,
-        kyc_approved: false,
+        kyc_approved: true,
         created_at: new Date().toISOString()
       };
       setKycDoc(mockDoc);
-      showToast('✅ KYC Submitted. Awaiting review. (Simulated)', 'success');
+      saveToStorage('counterOS_kycDoc', mockDoc);
+
+      setUserState(prev => {
+        const updated = { ...prev, pan_number: kycData.pan_number, gst_number: kycData.gst_number || null, is_kyc_verified: true };
+        saveToStorage('counterOS_user', updated);
+        return updated;
+      });
+
+      showToast('✅ KYC verified & permanently saved to profile!', 'success');
       return mockDoc;
     }
   };
@@ -1865,12 +2098,7 @@ export const AppProvider = ({ children }) => {
 
         const updateFields = { compliance_status: nextStatus, compliance_notes: notes };
         
-        if (nextStatus === 'Reward Released') {
-          // Generate active voucher code upon release
-          updateFields.voucher_code = `RLS-${Math.floor(100000 + Math.random() * 900000)}`;
-          updateFields.status = 'active';
-        } else if (nextStatus === 'Approved') {
-          // Change to Approved status
+        if (nextStatus === 'Reward Released' || nextStatus === 'Approved') {
           updateFields.voucher_code = `RLS-${Math.floor(100000 + Math.random() * 900000)}`;
           updateFields.status = 'active';
         }
@@ -1881,7 +2109,6 @@ export const AppProvider = ({ children }) => {
           .eq('id', redemptionId);
         if (updateErr) throw updateErr;
 
-        // Log compliance audit entry
         await supabase
           .from('compliance_audit_logs')
           .insert([{
@@ -1890,11 +2117,10 @@ export const AppProvider = ({ children }) => {
             action: nextStatus,
             status_from: redemption.compliance_status,
             status_to: nextStatus,
-            performed_by: 'Distributor',
+            performed_by: 'Sub-DB System',
             notes: notes || `Compliance status updated to: ${nextStatus}`
           }]);
 
-        // If Approved/Released, create notification. If Rejected, refund points & notify
         if (nextStatus === 'Rejected') {
           const { data: profile } = await supabase
             .from('profiles')
@@ -1963,7 +2189,7 @@ export const AppProvider = ({ children }) => {
         user_id: 'mock-user-id',
         action: nextStatus,
         status_to: nextStatus,
-        performed_by: 'Distributor',
+        performed_by: 'Sub-DB System',
         notes,
         created_at: new Date().toISOString()
       };
@@ -2009,17 +2235,21 @@ export const AppProvider = ({ children }) => {
     const tdsAmt = is194r ? Number(reward.tds_amount || (reward.reward_value * tdsPercent / 100)) : 0;
     const netBenefitVal = is194r ? (reward.reward_value - tdsAmt) : reward.reward_value;
 
-    let initialComplianceStatus = 'Approved';
     let kycDocId = null;
 
-    if (is194r) {
-      const hasKyc = submittedKycData || kycDoc;
-      initialComplianceStatus = hasKyc ? 'Pending Verification' : 'Pending KYC';
+    // If KYC data submitted at redemption time, save permanently to profile
+    if (submittedKycData) {
+      const kycResult = await submitKYC(submittedKycData);
+      if (kycResult) {
+        kycDocId = kycResult.id;
+      }
+    } else if (kycDoc) {
+      kycDocId = kycDoc.id;
     }
 
-    const voucherCode = is194r 
-      ? '🔒 Released after compliance' 
-      : `${reward.reward_type === 'coupon' ? 'CPN' : reward.reward_type === 'voucher' ? 'VCH' : 'AMZ'}-${Math.floor(100000 + Math.random() * 900000)}`;
+    // Direct Instant Voucher Release (KYC is now verified/saved)
+    const voucherCode = `${reward.reward_type === 'coupon' ? 'CPN' : reward.reward_type === 'voucher' ? 'VCH' : 'FR'}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const complianceStatus = 'Approved';
 
     if (isSupabaseConfigured && user?.id) {
       try {
@@ -2027,16 +2257,6 @@ export const AppProvider = ({ children }) => {
         let nextWallet = walletBalance;
         if (isCashback) {
           nextWallet = walletBalance + cashbackAmt;
-        }
-
-        if (submittedKycData) {
-          const kycResult = await submitKYC(submittedKycData);
-          if (kycResult) {
-            kycDocId = kycResult.id;
-            initialComplianceStatus = 'Pending Verification';
-          }
-        } else if (kycDoc) {
-          kycDocId = kycDoc.id;
         }
 
         const { error: profileErr } = await supabase
@@ -2054,10 +2274,10 @@ export const AppProvider = ({ children }) => {
             user_id: user.id,
             reward_id: reward.id,
             voucher_code: voucherCode,
-            status: is194r ? 'used' : 'active',
+            status: 'active',
             points_used: pointsUsed,
             cashback_amount: cashbackAmt,
-            compliance_status: initialComplianceStatus,
+            compliance_status: complianceStatus,
             tds_applied: tdsAmt,
             net_benefit: netBenefitVal,
             kyc_doc_id: kycDocId
@@ -2083,29 +2303,17 @@ export const AppProvider = ({ children }) => {
           await supabase.from('compliance_audit_logs').insert([{
             redemption_id: redemptionData.id,
             user_id: user.id,
-            action: 'Reward Selection',
+            action: 'Reward Direct Redemption',
             status_from: null,
-            status_to: initialComplianceStatus,
+            status_to: 'Approved',
             performed_by: 'Retailer',
-            notes: `Selected high-value 194R reward: ${reward.title}. Value: ₹${reward.reward_value}`
+            notes: `Direct 194R Redemption. Value: ₹${reward.reward_value}, 10% TDS: ₹${tdsAmt}. PAN Verified on file.`
           }]);
-
-          if (submittedKycData) {
-            await supabase.from('compliance_audit_logs').insert([{
-              redemption_id: redemptionData.id,
-              user_id: user.id,
-              action: 'KYC Submission',
-              status_from: 'Pending KYC',
-              status_to: 'Pending Verification',
-              performed_by: 'Retailer',
-              notes: `Submitted PAN Card: ${submittedKycData.pan_number}`
-            }]);
-          }
         }
 
-        const notifTitle = is194r ? '📋 Reward Held for 194R Compliance' : '🎉 Reward Redeemed Successfully';
+        const notifTitle = '🎉 Reward Redeemed Successfully!';
         const notifBody = is194r
-          ? `Redeemed ${reward.title} for ${pointsUsed} points. Held under Section 194R. TDS: ₹${tdsAmt}. Status: ${initialComplianceStatus}`
+          ? `Redeemed ${reward.title} for ${pointsUsed} points. Voucher Code: ${voucherCode}. 10% TDS (₹${tdsAmt}) documented.`
           : `You successfully redeemed ${reward.title} for ${pointsUsed} points. Voucher Code: ${voucherCode}`;
 
         await supabase.from('notifications').insert([{
@@ -2143,14 +2351,14 @@ export const AppProvider = ({ children }) => {
           })));
         }
 
-        showToast(is194r ? `📋 Held for 194R Compliance` : `🎉 Redeemed ${reward.title}!`);
+        showToast(`🎉 Redeemed ${reward.title}! Voucher: ${voucherCode}`);
         return {
           id: redemptionData.id,
           voucherCode,
           pointsUsed,
           remainingPoints: nextPoints,
           cashbackAmount: cashbackAmt,
-          complianceStatus: initialComplianceStatus
+          complianceStatus
         };
       } catch (e) {
         console.error('Failed to redeem reward in Supabase:', e);
@@ -2161,15 +2369,21 @@ export const AppProvider = ({ children }) => {
       if (submittedKycData) {
         const mockDoc = {
           id: 'mock-kyc-' + Date.now(),
-          user_id: 'mock-user-id',
+          user_id: user?.id || 'mock-user-id',
           ...submittedKycData,
           pan_verified: true,
-          kyc_approved: false,
+          kyc_approved: true,
           created_at: new Date().toISOString()
         };
         setKycDoc(mockDoc);
+        saveToStorage('counterOS_kycDoc', mockDoc);
         kycDocId = mockDoc.id;
-        initialComplianceStatus = 'Pending Verification';
+
+        setUserState(prev => {
+          const updated = { ...prev, pan_number: submittedKycData.pan_number, gst_number: submittedKycData.gst_number || null, is_kyc_verified: true };
+          saveToStorage('counterOS_user', updated);
+          return updated;
+        });
       }
 
       setPointCreditsState(prev => {
@@ -2194,16 +2408,16 @@ export const AppProvider = ({ children }) => {
         id: redemptionId,
         rewardId: reward.id,
         voucherCode: voucherCode,
-        status: is194r ? 'used' : 'active',
+        status: 'active',
         pointsUsed: pointsUsed,
         cashbackAmount: cashbackAmt,
         createdAt: new Date().toISOString(),
         reward: reward,
-        complianceStatus: initialComplianceStatus,
+        complianceStatus: 'Approved',
         tdsApplied: tdsAmt,
         netBenefit: netBenefitVal,
         kycDocId: kycDocId,
-        complianceNotes: null
+        complianceNotes: 'KYC verified & voucher unlocked'
       };
 
       setMyRedemptions(prev => {
@@ -2213,59 +2427,39 @@ export const AppProvider = ({ children }) => {
       });
 
       if (is194r) {
-        const auditLog1 = {
+        const newLog = {
           id: 'mock-audit-' + Date.now(),
           redemption_id: redemptionId,
-          user_id: 'mock-user-id',
-          action: 'Reward Selection',
-          status_to: initialComplianceStatus,
+          user_id: user?.id || 'mock-user-id',
+          action: 'Direct 194R Redemption',
+          status_to: 'Approved',
           performed_by: 'Retailer',
-          notes: `Selected high-value 194R reward: ${reward.title}. Value: ₹${reward.reward_value}`,
+          notes: `Direct 194R Redemption. Value: ₹${reward.reward_value}, 10% TDS: ₹${tdsAmt}. PAN Verified on file.`,
           created_at: new Date().toISOString()
         };
         setComplianceAuditLogs(prev => {
-          const next = [auditLog1, ...prev];
+          const next = [newLog, ...prev];
           saveToStorage('counterOS_complianceAuditLogs', next);
           return next;
         });
-
-        if (submittedKycData) {
-          const auditLog2 = {
-            id: 'mock-audit-' + (Date.now() + 1),
-            redemption_id: redemptionId,
-            user_id: 'mock-user-id',
-            action: 'KYC Submission',
-            status_to: 'Pending Verification',
-            performed_by: 'Retailer',
-            notes: `Submitted PAN Card: ${submittedKycData.pan_number}`,
-            created_at: new Date().toISOString()
-          };
-          setComplianceAuditLogs(prev => {
-            const next = [auditLog2, ...prev];
-            saveToStorage('counterOS_complianceAuditLogs', next);
-            return next;
-          });
-        }
       }
 
       addNotification({
-        title: is194r ? '📋 Reward Held for 194R Compliance' : '🎉 Reward Redeemed Successfully',
-        body: is194r
-          ? `Redeemed ${reward.title} for ${pointsUsed} points. Held under Section 194R. TDS: ₹${tdsAmt}. Status: ${initialComplianceStatus}`
-          : `You successfully redeemed ${reward.title} for ${pointsUsed} points. Voucher Code: ${voucherCode}`,
+        title: '🎉 Reward Redeemed Successfully!',
+        body: `You redeemed ${reward.title} for ${pointsUsed} points. Voucher Code: ${voucherCode}`,
         role: 'retailer',
         type: 'notification',
         isRead: false
       });
 
-      showToast(is194r ? `📋 Held for 194R Compliance` : `🎉 Redeemed ${reward.title}!`);
+      showToast(`🎉 Redeemed ${reward.title}! Voucher: ${voucherCode}`);
       return {
         id: redemptionId,
         voucherCode,
         pointsUsed,
-        remainingPoints: pointCredits - pointsUsed,
+        remainingPoints: pointCreditsState - pointsUsed,
         cashbackAmount: cashbackAmt,
-        complianceStatus: initialComplianceStatus
+        complianceStatus: 'Approved'
       };
     }
   };
