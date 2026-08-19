@@ -205,35 +205,7 @@ export const SubDBDashboard = () => {
             </div>
           </div>
 
-          {/* Monthly Restock Performance Tracker */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(212,165,116,0.1), rgba(196,30,58,0.05))',
-            border: '1.5px solid var(--g4)',
-            borderRadius: 'var(--r16)',
-            padding: '1.1rem',
-            marginBottom: '1.25rem'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.6rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
-                <span style={{ fontSize: '1.1rem' }}>🎯</span>
-                <h4 style={{ fontSize: '.85rem', fontWeight: 800, color: 'var(--t1)', margin: 0 }}>Monthly Restock Quota</h4>
-              </div>
-              <span style={{ fontSize: '.75rem', fontWeight: 900, color: 'var(--g4)' }}>{monthlyProgress}% Achieved</span>
-            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.75rem', color: 'var(--t2)', marginBottom: '.4rem' }}>
-              <span>₹{monthAmount.toLocaleString('en-IN')} delivered</span>
-              <span style={{ color: 'var(--t3)' }}>Target: ₹{targetMonthlyAmount.toLocaleString('en-IN')}</span>
-            </div>
-
-            <div style={{ height: '8px', background: 'var(--bg3)', borderRadius: '9999px', overflow: 'hidden', marginBottom: '.6rem' }}>
-              <div style={{ height: '100%', width: `${monthlyProgress}%`, background: 'linear-gradient(90deg, #d4a574, #c41e3a)', borderRadius: '9999px', transition: 'width 0.5s ease-out' }} />
-            </div>
-
-            <p style={{ fontSize: '.68rem', color: 'var(--t3)', margin: 0 }}>
-              {monthInvoices.length} retail invoices uploaded this month. Retailers receive instant stock credits and notifications.
-            </p>
-          </div>
 
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '.75rem', marginBottom: '1.25rem' }}>
