@@ -5,6 +5,9 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { Intelligence } from '../services/intelligence';
 import { ErrorLogger } from '../services/errorLogger';
 import { ProductIcon } from '../components/ui/ProductIcon';
+import { InvoiceDetailModal } from '../components/modals/InvoiceDetailModal';
+import { RaiseIssueModal } from '../components/modals/RaiseIssueModal';
+import { NotificationDrawer } from '../components/modals/NotificationDrawer';
 
 const WEEK_DATA = [
   {day:'Mon',purchase:320,sale:120},{day:'Tue',purchase:580,sale:190},{day:'Wed',purchase:240,sale:95},
@@ -16,12 +19,19 @@ export const Home = React.memo(() => {
   const { 
     user, walletBalance, inventory, transactions, theme, toggleTheme, FERRERO_THEME, 
     activeCampaigns, claimCampaign, pointCredits,
-    monthlyTargets, simulateTargetProgress, claimTargetPoints 
+    monthlyTargets, simulateTargetProgress, claimTargetPoints,
+    notifications, latestInvoicePopup, clearInvoicePopup
   } = useAppContext();
   const [insight, setInsight] = useState('');
   const [loadingInsight, setLoadingInsight] = useState(true);
   const [insightError, setInsightError] = useState(false);
   const [showTargetsModal, setShowTargetsModal] = useState(false);
+  const [showNotifDrawer, setShowNotifDrawer] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [showRaiseIssue, setShowRaiseIssue] = useState(false);
+  const [issueInvoiceRef, setIssueInvoiceRef] = useState(null);
+
+  const unreadNotifs = (notifications || []).filter(n => !n.isRead && !n.is_read).length;
 
   // Memoized insight generation
   const generateInsight = useCallback(async () => {
@@ -120,9 +130,18 @@ Wallet: ₹${walletBalance}`;
                    <button className="btn-icon" onClick={() => navigate('/assistant')} style={{ border: '1px solid var(--g4)', color: 'var(--g4)', background: 'rgba(212,165,116,.08)' }}>
                       <span className="material-symbols-outlined fi">auto_awesome</span>
                    </button>
-                   <button className="btn-icon" style={{ position: 'relative', background: 'var(--bg3)', border: '1px solid var(--bdr)' }}>
+                   <button 
+                      className="btn-icon" 
+                      onClick={() => setShowNotifDrawer(true)}
+                      style={{ position: 'relative', background: 'var(--bg3)', border: '1px solid var(--bdr)', cursor: 'pointer' }}
+                      title="Notifications"
+                   >
                       <span className="material-symbols-outlined">notifications</span>
-                      <div className="gdot" style={{ position: 'absolute', top: '0', right: '0', background: '#ef4444', border: '2px solid var(--bg1)' }}>3</div>
+                      {unreadNotifs > 0 && (
+                        <div className="gdot" style={{ position: 'absolute', top: '-3px', right: '-3px', background: '#c41e3a', border: '2px solid var(--bg1)', fontSize: '.58rem', fontWeight: 900, minWidth: '16px', height: '16px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                          {unreadNotifs}
+                        </div>
+                      )}
                    </button>
                    <button className="btn-icon" onClick={toggleTheme} style={{ background: 'var(--bg3)', border: '1px solid var(--bdr)' }}>
                       <span className="material-symbols-outlined">{theme === 'dark' ? 'dark_mode' : 'light_mode'}</span>
@@ -457,20 +476,24 @@ Wallet: ₹${walletBalance}`;
                     </div>
                  </div>
 
-                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '.6rem' }}>
-                    <div onClick={() => navigate('/earnings')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
-                       <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(160,210,255,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--td)', fontSize: '1.1rem' }}>bar_chart</span></div>
-                       <span style={{ fontSize: '.65rem', fontWeight: 700, color: 'var(--t2)' }}>Earnings</span>
-                    </div>
-                    <div onClick={() => navigate('/assistant')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
-                       <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(212,165,116,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--g4)', fontSize: '1.1rem' }}>auto_awesome</span></div>
-                       <span style={{ fontSize: '.65rem', fontWeight: 700, color: 'var(--t2)' }}>Assistant</span>
-                    </div>
-                    <div onClick={() => navigate('/settings')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
-                       <div style={{ width: '2.2rem', height: '2.2rem', background: 'var(--bg3)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--o4)', fontSize: '1.1rem' }}>settings</span></div>
-                       <span style={{ fontSize: '.65rem', fontWeight: 700, color: 'var(--t2)' }}>Settings</span>
-                    </div>
-                 </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '.5rem' }}>
+                     <div onClick={() => navigate('/earnings')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.4rem', cursor: 'pointer' }}>
+                        <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(160,210,255,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--td)', fontSize: '1.1rem' }}>bar_chart</span></div>
+                        <span style={{ fontSize: '.62rem', fontWeight: 700, color: 'var(--t2)' }}>Earnings</span>
+                     </div>
+                     <div onClick={() => navigate('/assistant')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.4rem', cursor: 'pointer' }}>
+                        <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(212,165,116,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--g4)', fontSize: '1.1rem' }}>auto_awesome</span></div>
+                        <span style={{ fontSize: '.62rem', fontWeight: 700, color: 'var(--t2)' }}>Assistant</span>
+                     </div>
+                     <div onClick={() => setShowRaiseIssue(true)} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.4rem', cursor: 'pointer' }}>
+                        <div style={{ width: '2.2rem', height: '2.2rem', background: 'rgba(239,68,68,.1)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: '#ef4444', fontSize: '1.1rem' }}>support_agent</span></div>
+                        <span style={{ fontSize: '.62rem', fontWeight: 700, color: 'var(--t2)' }}>Raise Issue</span>
+                     </div>
+                     <div onClick={() => navigate('/settings')} style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', padding: '.8rem .3rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.4rem', cursor: 'pointer' }}>
+                        <div style={{ width: '2.2rem', height: '2.2rem', background: 'var(--bg3)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined fi" style={{ color: 'var(--o4)', fontSize: '1.1rem' }}>settings</span></div>
+                        <span style={{ fontSize: '.62rem', fontWeight: 700, color: 'var(--t2)' }}>Settings</span>
+                     </div>
+                  </div>
               </div>
 
              {/* Chart */}
@@ -535,13 +558,29 @@ Wallet: ₹${walletBalance}`;
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
                    {transactions.slice(0, 3).map((t, i) => (
-                      <div key={t.id || i} style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)' }}>
+                      <div 
+                        key={t.id || i} 
+                        onClick={() => {
+                          setSelectedInvoice({
+                            invoice_number: t.sub?.match(/#([A-Za-z0-9-]+)/)?.[1] || `INV-2026-${i+1}`,
+                            total_amount: Number(t.amt?.replace(/[^0-9.]/g, '') || 3500),
+                            purchase_date: t.date === 'Just now' ? new Date().toISOString().split('T')[0] : t.date,
+                            wholesaler_name: t.label || 'Ferrero Sub-DB Representative',
+                            retailer_name: user?.name || 'Sweet Shop Retailer',
+                            products: [
+                              { name: 'Ferrero Rocher T24 (24 pcs)', qty: 4, unit: 'Box', price: 950, total: 3800 },
+                              { name: 'Kinder Joy T1 for Boys', qty: 2, unit: 'Outer', price: 720, total: 1440 }
+                            ]
+                          });
+                        }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '.7rem', padding: '1rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', cursor: 'pointer' }}
+                      >
                          <div style={{ width: '2rem', height: '2rem', background: 'var(--bg3)', borderRadius: '.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <span className="material-symbols-outlined fi" style={{ fontSize: '1.1rem', color: t.clr }}>{t.icon || 'receipt'}</span>
                          </div>
                          <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{ fontSize: '.85rem', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.label}</p>
-                            <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>{t.date} · {t.sub}</p>
+                            <p style={{ fontSize: '.65rem', color: 'var(--t3)' }}>{t.date} · {t.sub} <span style={{ color: 'var(--g4)', fontWeight: 700 }}>· View Bill →</span></p>
                          </div>
                          <span style={{ fontWeight: 800, fontSize: '.9rem', color: t.clr, flexShrink: 0 }}>{t.amt}</span>
                       </div>
@@ -579,6 +618,108 @@ Wallet: ₹${walletBalance}`;
           </div>
         </div>
       </div>
+
+       {/* Realtime Sub-DB Invoice Notification Popup */}
+       {latestInvoicePopup && (
+         <div style={{
+           position: 'fixed',
+           bottom: '5.5rem',
+           left: '50%',
+           transform: 'translateX(-50%)',
+           width: 'calc(100% - 2rem)',
+           maxWidth: '420px',
+           zIndex: 1500,
+           background: 'var(--bg1)',
+           border: '2px solid var(--g4)',
+           borderRadius: 'var(--r16)',
+           padding: '1rem 1.1rem',
+           boxShadow: '0 10px 35px rgba(0,0,0,0.85)',
+           animation: 'slideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)'
+         }}>
+           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '.4rem' }}>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+               <span style={{ fontSize: '1.4rem' }}>🎉</span>
+               <div>
+                 <h4 style={{ fontSize: '.88rem', fontWeight: 900, color: 'var(--g4)', margin: 0 }}>New Restock Invoice Added!</h4>
+                 <p style={{ fontSize: '.65rem', color: 'var(--t3)', margin: 0 }}>Verified by Sub-DB Representative</p>
+               </div>
+             </div>
+             <button onClick={clearInvoicePopup} style={{ background: 'transparent', border: 'none', color: 'var(--t3)', cursor: 'pointer' }}>
+               <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>close</span>
+             </button>
+           </div>
+           <p style={{ fontSize: '.75rem', color: 'var(--t2)', margin: '0 0 .7rem 0', lineHeight: 1.3 }}>
+             Invoice <strong>#{latestInvoicePopup.invoice_number || 'INV'}</strong> for <strong>₹{Number(latestInvoicePopup.total_amount || 0).toLocaleString('en-IN')}</strong> has been credited to your store stock & targets.
+           </p>
+           <div style={{ display: 'flex', gap: '.5rem' }}>
+             <button
+               onClick={() => {
+                 setSelectedInvoice(latestInvoicePopup);
+                 clearInvoicePopup();
+               }}
+               style={{
+                 flex: 1.2,
+                 padding: '.45rem .8rem',
+                 background: 'linear-gradient(135deg, #d4a574, #c41e3a)',
+                 border: 'none',
+                 borderRadius: 'var(--r8)',
+                 color: '#fff',
+                 fontSize: '.75rem',
+                 fontWeight: 900,
+                 cursor: 'pointer'
+               }}
+             >
+               View Bill Details →
+             </button>
+             <button
+               onClick={clearInvoicePopup}
+               style={{
+                 flex: 1,
+                 padding: '.45rem .8rem',
+                 background: 'var(--bg3)',
+                 border: '1px solid var(--bdr)',
+                 borderRadius: 'var(--r8)',
+                 color: 'var(--t1)',
+                 fontSize: '.75rem',
+                 fontWeight: 700,
+                 cursor: 'pointer'
+               }}
+             >
+               Dismiss
+             </button>
+           </div>
+         </div>
+       )}
+
+       {/* Invoice Detail Modal */}
+       {selectedInvoice && (
+         <InvoiceDetailModal
+           invoice={selectedInvoice}
+           onClose={() => setSelectedInvoice(null)}
+           onRaiseIssue={(inv) => {
+             setIssueInvoiceRef(inv);
+             setShowRaiseIssue(true);
+           }}
+         />
+       )}
+
+       {/* Raise Concern / Dispute Modal */}
+       {showRaiseIssue && (
+         <RaiseIssueModal
+           invoice={issueInvoiceRef}
+           onClose={() => {
+             setShowRaiseIssue(false);
+             setIssueInvoiceRef(null);
+           }}
+         />
+       )}
+
+       {/* Notification Drawer */}
+       <NotificationDrawer
+         isOpen={showNotifDrawer}
+         onClose={() => setShowNotifDrawer(false)}
+         onSelectInvoice={(inv) => setSelectedInvoice(inv)}
+       />
 
        {showTargetsModal && (
          <div style={{

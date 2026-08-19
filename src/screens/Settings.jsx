@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Header } from '../components/layout/Header';
 import { useAppContext } from '../context/AppContext';
 import { AppLayout } from '../components/layout/AppLayout';
+import { RaiseIssueModal } from '../components/modals/RaiseIssueModal';
 
 export const Settings = () => {
-    const { user, theme, toggleTheme } = useAppContext();
+    const { user, theme, toggleTheme, supportTickets } = useAppContext();
+    const [showRaiseIssue, setShowRaiseIssue] = useState(false);
+
+    const myTickets = Array.isArray(supportTickets) ? supportTickets : [];
 
     return (
         <AppLayout>
@@ -53,6 +57,87 @@ export const Settings = () => {
                         </div>
                     </div>
 
+                    {/* DEDICATED SUPPORT, CALLING & GRIEVANCES PANEL */}
+                    <div className="au" style={{ background: 'var(--bg2)', border: '1.5px solid var(--bdr2)', borderRadius: 'var(--r12)', padding: '1.1rem', marginBottom: '1.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h4 style={{ fontSize: '.8rem', color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.05em', margin: 0 }}>Helpdesk &amp; Escalations</h4>
+                            <span style={{ fontSize: '.68rem', color: 'var(--g4)', fontWeight: 800 }}>Ferrero Support</span>
+                        </div>
+
+                        {/* Call Representative & Raise Concern Buttons */}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.6rem', marginBottom: '1rem' }}>
+                            <a
+                                href="tel:+919876543210"
+                                style={{
+                                    background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.08))',
+                                    border: '1.5px solid #10b981',
+                                    borderRadius: 'var(--r12)',
+                                    padding: '.85rem .6rem',
+                                    textDecoration: 'none',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: '.3rem',
+                                    textAlign: 'center'
+                                }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: '#10b981' }}>call</span>
+                                <span style={{ fontSize: '.78rem', fontWeight: 800, color: 'var(--t1)' }}>Call Rep</span>
+                                <span style={{ fontSize: '.62rem', color: 'var(--t3)' }}>Sub-DB Distributor</span>
+                            </a>
+
+                            <div
+                                onClick={() => setShowRaiseIssue(true)}
+                                style={{
+                                    background: 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(212,165,116,0.08))',
+                                    border: '1.5px solid #ef4444',
+                                    borderRadius: 'var(--r12)',
+                                    padding: '.85rem .6rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: '.3rem',
+                                    textAlign: 'center'
+                                }}
+                            >
+                                <span className="material-symbols-outlined" style={{ fontSize: '1.4rem', color: '#ef4444' }}>report_problem</span>
+                                <span style={{ fontSize: '.78rem', fontWeight: 800, color: 'var(--t1)' }}>Raise Issue</span>
+                                <span style={{ fontSize: '.62rem', color: 'var(--t3)' }}>Wrong upload / claim</span>
+                            </div>
+                        </div>
+
+                        {/* Recent Raised Tickets */}
+                        {myTickets.length > 0 && (
+                            <div>
+                                <p style={{ fontSize: '.7rem', color: 'var(--t3)', textTransform: 'uppercase', fontWeight: 700, margin: '0 0 .5rem 0' }}>
+                                    My Tickets ({myTickets.length})
+                                </p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                                    {myTickets.slice(0, 3).map((t, idx) => (
+                                        <div key={idx} style={{ background: 'var(--bg3)', border: '1px solid var(--bdr)', borderRadius: 'var(--r8)', padding: '.6rem .75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <div>
+                                                <p style={{ fontSize: '.78rem', fontWeight: 800, color: 'var(--t1)', margin: 0 }}>#{t.ticket_id} · {t.subject}</p>
+                                                <p style={{ fontSize: '.62rem', color: 'var(--t3)', margin: '.1rem 0 0 0' }}>{t.category?.replace('_', ' ').toUpperCase()} · {t.created_at ? new Date(t.created_at).toLocaleDateString() : 'Recent'}</p>
+                                            </div>
+                                            <span style={{
+                                                fontSize: '.6rem',
+                                                fontWeight: 800,
+                                                color: t.status === 'Resolved' ? '#10b981' : '#d4a574',
+                                                background: t.status === 'Resolved' ? 'rgba(16,185,129,0.12)' : 'rgba(212,165,116,0.15)',
+                                                border: `1px solid ${t.status === 'Resolved' ? '#10b981' : '#d4a574'}`,
+                                                padding: '.15rem .45rem',
+                                                borderRadius: '9999px'
+                                            }}>
+                                                {t.status}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="au" style={{ animationDelay: '.05s', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)', overflow: 'hidden' }}>
                         <div style={{ padding: '1.1rem', borderBottom: '1px solid var(--bdr)' }}>
                             <h4 style={{ fontSize: '.8rem', color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '1rem' }}>Preferences</h4>
@@ -76,22 +161,19 @@ export const Settings = () => {
                             </div>
                         </div>
 
-                         <div style={{ padding: '1.1rem', borderBottom: '1px solid var(--bdr)' }}>
-                            <h4 style={{ fontSize: '.8rem', color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '1rem' }}>Support</h4>
-                            {['Help Center', 'Chat with us', 'Terms & Privacy'].map((item, idx) => (
-                                <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: idx !== 2 ? '1rem' : 0, cursor: 'pointer' }}>
-                                    <span style={{ fontWeight: 600, fontSize: '.9rem', color: 'var(--t1)' }}>{item}</span>
-                                    <span className="material-symbols-outlined" style={{ color: 'var(--t3)', fontSize: '1.1rem' }}>chevron_right</span>
-                                </div>
-                            ))}
-                        </div>
-
                         <div style={{ padding: '1.1rem', cursor: 'pointer' }} onClick={() => window.location.href='/'}>
                             <span style={{ fontWeight: 600, fontSize: '.9rem', color: '#ef4444' }}>Log Out</span>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Raise Concern / Dispute Modal */}
+            {showRaiseIssue && (
+                <RaiseIssueModal
+                    onClose={() => setShowRaiseIssue(false)}
+                />
+            )}
         </AppLayout>
     );
 };

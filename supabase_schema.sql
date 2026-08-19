@@ -206,6 +206,25 @@ CREATE TABLE IF NOT EXISTS public.notifications (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- ─── 11. SUPPORT TICKETS & GRIEVANCES ─────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.support_tickets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    ticket_id TEXT UNIQUE NOT NULL,
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    retailer_name TEXT NOT NULL,
+    retailer_phone TEXT NOT NULL,
+    category TEXT NOT NULL, -- 'wrong_upload', 'claim_issue', 'points_discrepancy', 'stock_issue', 'other'
+    subject TEXT NOT NULL,
+    description TEXT NOT NULL,
+    invoice_number TEXT,
+    priority TEXT DEFAULT 'Medium', -- 'Low', 'Medium', 'High', 'Urgent'
+    status TEXT NOT NULL DEFAULT 'Open', -- 'Open', 'In Review', 'Resolved', 'Closed'
+    assigned_to TEXT DEFAULT 'Ferrero Support Desk',
+    resolution_notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- ══════════════════════════════════════════════════════════════════════════════
 -- 11. AUTOMATED SMART POSTGRESQL TRIGGERS & BUSINESS LOGIC
 -- ══════════════════════════════════════════════════════════════════════════════

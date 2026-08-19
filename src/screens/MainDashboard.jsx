@@ -209,6 +209,7 @@ export const MainDashboard = () => {
             { id: 'analytics', label: 'Analytics', icon: 'analytics' },
             { id: 'reports', label: 'Reports', icon: 'summarize' },
             { id: 'users', label: 'Users & Roles', icon: 'manage_accounts' },
+            { id: 'tickets', label: 'Grievances & Tickets', icon: 'support_agent' },
             { id: 'notifications', label: 'Notifications', icon: 'notifications' },
             { id: 'settings', label: 'Settings', icon: 'settings' },
           ].map(item => (
@@ -241,6 +242,7 @@ export const MainDashboard = () => {
               {activeTab === 'analytics' && 'Detailed Analytics'}
               {activeTab === 'reports' && 'Export Reports'}
               {activeTab === 'users' && 'Users & Access Control'}
+              {activeTab === 'tickets' && 'Retailer Grievances & Support Tickets'}
               {activeTab === 'notifications' && 'Announcements & Push Alerts'}
               {activeTab === 'settings' && 'Platform Settings'}
             </h2>
@@ -288,6 +290,7 @@ export const MainDashboard = () => {
           {activeTab === 'analytics' && renderAnalyticsTab()}
           {activeTab === 'reports' && renderReportsTab()}
           {activeTab === 'users' && renderUsersTab()}
+          {activeTab === 'tickets' && renderTicketsTab()}
           {activeTab === 'notifications' && renderNotificationsTab()}
           {activeTab === 'settings' && renderSettingsTab()}
         </div>
@@ -1151,16 +1154,171 @@ export const MainDashboard = () => {
     );
   }
 
+  function downloadTicketsCSV() {
+    const storedTickets = JSON.parse(localStorage.getItem('counterOS_supportTickets') || '[]');
+    if (storedTickets.length === 0) {
+      alert('No support tickets found to export.');
+      return;
+    }
+    const headers = ['Ticket ID', 'Retailer Name', 'Phone', 'Category', 'Subject', 'Invoice Ref', 'Priority', 'Status', 'Date'];
+    const rows = storedTickets.map(t => [
+      t.ticket_id || t.id,
+      `"${t.retailer_name || 'Retailer'}"`,
+      t.retailer_phone || '',
+      t.category || '',
+      `"${(t.subject || '').replace(/"/g, '""')}"`,
+      t.invoice_number || 'N/A',
+      t.priority || 'Medium',
+      t.status || 'Open',
+      t.created_at ? new Date(t.created_at).toLocaleDateString() : ''
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Ferrero_Support_Tickets_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   function renderReportsTab() {
     return (
       <div className="card" style={{ padding: '40px', textAlign: 'center' }}>
         <i className="material-symbols-outlined" style={{ fontSize: '64px', color: COLORS.accent, marginBottom: '20px' }}>download_for_offline</i>
         <h2>Generate Platform Excel/CSV Reports</h2>
-        <p className="text-muted" style={{ maxWidth: '500px', margin: '10px auto 30px' }}>Export complete directories of Retailers, Distributors, Points, and Scanned Invoices into custom formatted spreadsheets.</p>
-        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+        <p className="text-muted" style={{ maxWidth: '500px', margin: '10px auto 30px' }}>Export complete directories of Retailers, Distributors, Points, Scanned Invoices, and Raised Grievances into spreadsheets.</p>
+        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button className="btn-primary" onClick={() => alert('Exporting Retailers CSV...')}>Export Retailers</button>
           <button className="btn-primary" onClick={() => alert('Exporting Invoices CSV...')}>Export Invoices History</button>
-          <button className="btn-secondary" onClick={() => alert('Exporting Leadboards CSV...')}>Export SubDV Leaderboard</button>
+          <button className="btn-primary" onClick={downloadTicketsCSV} style={{ background: 'linear-gradient(135deg, #c41e3a, #d4a574)', border: 'none' }}>
+            📥 Export Grievances & Tickets CSV
+          </button>
+          <button className="btn-secondary" onClick={() => alert('Exporting Leaderboards CSV...')}>Export SubDV Leaderboard</button>
+        </div>
+      </div>
+    );
+  }
+
+  function renderTicketsTab() {
+    const rawTickets = JSON.parse(localStorage.getItem('counterOS_supportTickets') || '[]');
+    const defaultTickets = [
+      { id: 't1', ticket_id: 'TKT-849201', retailer_name: 'Mahalaxmi Sweets', retailer_phone: '9876543210', category: 'wrong_upload', subject: 'Invoice #INV-9921 product quantity mismatch', invoice_number: 'INV-9921', priority: 'High', status: 'Open', created_at: '2026-08-19T10:30:00Z' },
+      { id: 't2', ticket_id: 'TKT-519284', retailer_name: 'Bikaner Misthan', retailer_phone: '9876543211', category: 'claim_issue', subject: 'Voucher redemption code not received', invoice_number: 'VCH-9821', priority: 'Medium', status: 'Resolved', created_at: '2026-08-18T14:15:00Z' }
+    ];
+    const ticketList = rawTickets.length > 0 ? rawTickets : defaultTickets;
+
+    const openCount = ticketList.filter(t => t.status !== 'Resolved').length;
+    const resolvedCount = ticketList.filter(t => t.status === 'Resolved').length;
+
+    return (
+      <div className="tickets-tab">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '20px' }}>
+          <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(212,165,116,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <i className="material-symbols-outlined" style={{ color: COLORS.accent, fontSize: '28px' }}>support_agent</i>
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: '12px', color: COLORS.textMuted, textTransform: 'uppercase', fontWeight: 'bold' }}>Total Tickets</p>
+              <h2 style={{ margin: 0, fontSize: '24px' }}>{ticketList.length}</h2>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(196,30,58,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <i className="material-symbols-outlined" style={{ color: COLORS.primary, fontSize: '28px' }}>error</i>
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: '12px', color: COLORS.textMuted, textTransform: 'uppercase', fontWeight: 'bold' }}>Open Grievances</p>
+              <h2 style={{ margin: 0, fontSize: '24px', color: COLORS.primary }}>{openCount}</h2>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: '20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <i className="material-symbols-outlined" style={{ color: '#10b981', fontSize: '28px' }}>check_circle</i>
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: '12px', color: COLORS.textMuted, textTransform: 'uppercase', fontWeight: 'bold' }}>Resolved</p>
+              <h2 style={{ margin: 0, fontSize: '24px', color: '#10b981' }}>{resolvedCount}</h2>
+            </div>
+          </div>
+        </div>
+
+        <div className="card table-card">
+          <div className="table-header-filters" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h4>Retailer Dispute &amp; Escalation Tickets</h4>
+            <button className="btn-primary" onClick={downloadTicketsCSV} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+              <i className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</i> Export CSV
+            </button>
+          </div>
+          <div className="table-responsive">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>Retailer</th>
+                  <th>Category</th>
+                  <th>Subject &amp; Notes</th>
+                  <th>Invoice Ref</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ticketList.map((t, idx) => (
+                  <tr key={t.id || idx}>
+                    <td><strong>#{t.ticket_id || t.id}</strong></td>
+                    <td>
+                      <div><strong>{t.retailer_name}</strong></div>
+                      <small style={{ color: COLORS.textMuted }}>+91 {t.retailer_phone}</small>
+                    </td>
+                    <td>
+                      <span className="badge" style={{ background: '#f5efe6', color: COLORS.textDark, border: '1px solid #d4a574' }}>
+                        {t.category?.replace('_', ' ').toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={{ maxWidth: '280px' }}>
+                      <div style={{ fontWeight: 'bold' }}>{t.subject}</div>
+                      <small style={{ color: COLORS.textMuted }}>{t.description}</small>
+                    </td>
+                    <td>
+                      {t.invoice_number ? <span style={{ fontWeight: 'bold', color: COLORS.primary }}>#{t.invoice_number}</span> : '—'}
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: 'bold', color: t.priority === 'High' ? COLORS.primary : COLORS.textDark }}>
+                        {t.priority || 'Medium'}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`status-badge ${t.status === 'Resolved' ? 'active' : 'pending'}`}>
+                        {t.status}
+                      </span>
+                    </td>
+                    <td>
+                      {t.status !== 'Resolved' ? (
+                        <button
+                          className="btn-sm"
+                          style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontWeight: 'bold' }}
+                          onClick={() => {
+                            const updated = ticketList.map(item => item.ticket_id === t.ticket_id ? { ...item, status: 'Resolved' } : item);
+                            localStorage.setItem('counterOS_supportTickets', JSON.stringify(updated));
+                            alert(`Ticket #${t.ticket_id} marked as Resolved.`);
+                            window.location.reload();
+                          }}
+                        >
+                          Mark Resolved
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 'bold' }}>✓ Done</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSubDB } from './SubDBContext';
+import { InvoiceDetailModal } from '../../components/modals/InvoiceDetailModal';
 
 // ─── Sub-DB Header bar ────────────────────────────────────────────────────────
 export const SubDBHeader = ({ title, showBack, onBack }) => {
@@ -111,16 +112,20 @@ const StatCard = ({ icon, label, value, color = '#d4a574' }) => (
 );
 
 // ─── Invoice Row ──────────────────────────────────────────────────────────────
-const InvoiceRow = ({ inv }) => {
+const InvoiceRow = ({ inv, onClick }) => {
   const products = Array.isArray(inv.products) ? inv.products : [];
   const date = inv.purchase_date || inv.created_at?.split('T')[0] || '—';
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '.7rem',
-      padding: '1rem', background: 'var(--bg2)',
-      border: '1px solid var(--bdr)', borderRadius: 'var(--r12)'
-    }}>
+    <div 
+      onClick={() => onClick?.(inv)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: '.7rem',
+        padding: '1rem', background: 'var(--bg2)',
+        border: '1px solid var(--bdr)', borderRadius: 'var(--r12)',
+        cursor: 'pointer', transition: 'transform 0.15s'
+      }}
+    >
       <div style={{
         width: '2.2rem', height: '2.2rem', background: 'rgba(212,165,116,.1)',
         borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0
@@ -128,11 +133,11 @@ const InvoiceRow = ({ inv }) => {
         <span className="material-symbols-outlined fi" style={{ fontSize: '1.1rem', color: '#d4a574' }}>receipt</span>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: '.85rem', fontWeight: 800, margin: '0 0 .1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ fontSize: '.85rem', fontWeight: 800, margin: '0 0 .1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--t1)' }}>
           {inv.wholesaler_name || 'Invoice'}
         </p>
         <p style={{ fontSize: '.65rem', color: 'var(--t3)', margin: 0 }}>
-          {date} · {inv.retailer_name || 'No retailer'} · {products.length} item{products.length !== 1 ? 's' : ''}
+          {date} · {inv.retailer_name || 'No retailer'} · {products.length} item{products.length !== 1 ? 's' : ''} <span style={{ color: 'var(--g4)', fontWeight: 700 }}>· View →</span>
         </p>
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -157,10 +162,16 @@ const InvoiceRow = ({ inv }) => {
 export const SubDBDashboard = () => {
   const navigate = useNavigate();
   const { subUser, invoices } = useSubDB();
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   const thisMonth = new Date().toISOString().slice(0, 7);
   const monthInvoices = invoices.filter(i => (i.created_at || '').startsWith(thisMonth));
+  const monthAmount = monthInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0);
   const totalAmount = invoices.reduce((s, i) => s + Number(i.total_amount || 0), 0);
+
+  // Monthly target metrics
+  const targetMonthlyAmount = 75000;
+  const monthlyProgress = Math.min(100, Math.round((monthAmount / targetMonthlyAmount) * 100));
 
   return (
     <div className="screen active" id="s-subdb-dashboard">
@@ -173,7 +184,7 @@ export const SubDBDashboard = () => {
 
           {/* EMP Info card */}
           <div style={{
-            background: '#fff', border: '2px solid #d4a574', borderRadius: 'var(--r16)',
+            background: 'var(--bg2)', border: '2px solid var(--g4)', borderRadius: 'var(--r16)',
             padding: '1rem', marginBottom: '1.25rem',
             boxShadow: '0 2px 8px rgba(212,165,116,.1)',
             display: 'flex', alignItems: 'center', gap: '.75rem'
@@ -186,19 +197,49 @@ export const SubDBDashboard = () => {
               <span className="material-symbols-outlined" style={{ color: '#fff', fontSize: '1.5rem' }}>badge</span>
             </div>
             <div style={{ flex: 1 }}>
-              <p style={{ fontWeight: 900, fontSize: '.95rem', color: '#2d2d2d', margin: '0 0 .1rem' }}>{subUser?.name}</p>
-              <p style={{ fontSize: '.7rem', color: '#d4a574', fontWeight: 700, margin: '0 0 .1rem' }}>{subUser?.emp_id}</p>
-              <p style={{ fontSize: '.65rem', color: '#666', margin: 0 }}>
+              <p style={{ fontWeight: 900, fontSize: '.95rem', color: 'var(--t1)', margin: '0 0 .1rem' }}>{subUser?.name}</p>
+              <p style={{ fontSize: '.7rem', color: 'var(--g4)', fontWeight: 700, margin: '0 0 .1rem' }}>{subUser?.emp_id}</p>
+              <p style={{ fontSize: '.65rem', color: 'var(--t3)', margin: 0 }}>
                 📍 {subUser?.district}, {subUser?.state}
               </p>
             </div>
           </div>
 
+          {/* Monthly Restock Performance Tracker */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(212,165,116,0.1), rgba(196,30,58,0.05))',
+            border: '1.5px solid var(--g4)',
+            borderRadius: 'var(--r16)',
+            padding: '1.1rem',
+            marginBottom: '1.25rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                <span style={{ fontSize: '1.1rem' }}>🎯</span>
+                <h4 style={{ fontSize: '.85rem', fontWeight: 800, color: 'var(--t1)', margin: 0 }}>Monthly Restock Quota</h4>
+              </div>
+              <span style={{ fontSize: '.75rem', fontWeight: 900, color: 'var(--g4)' }}>{monthlyProgress}% Achieved</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.75rem', color: 'var(--t2)', marginBottom: '.4rem' }}>
+              <span>₹{monthAmount.toLocaleString('en-IN')} delivered</span>
+              <span style={{ color: 'var(--t3)' }}>Target: ₹{targetMonthlyAmount.toLocaleString('en-IN')}</span>
+            </div>
+
+            <div style={{ height: '8px', background: 'var(--bg3)', borderRadius: '9999px', overflow: 'hidden', marginBottom: '.6rem' }}>
+              <div style={{ height: '100%', width: `${monthlyProgress}%`, background: 'linear-gradient(90deg, #d4a574, #c41e3a)', borderRadius: '9999px', transition: 'width 0.5s ease-out' }} />
+            </div>
+
+            <p style={{ fontSize: '.68rem', color: 'var(--t3)', margin: 0 }}>
+              {monthInvoices.length} retail invoices uploaded this month. Retailers receive instant stock credits and notifications.
+            </p>
+          </div>
+
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '.75rem', marginBottom: '1.25rem' }}>
-            <StatCard icon="receipt" label="Total" value={invoices.length} color="#d4a574" />
+            <StatCard icon="receipt" label="Total Bills" value={invoices.length} color="#d4a574" />
             <StatCard icon="calendar_today" label="This Month" value={monthInvoices.length} color="#c41e3a" />
-            <StatCard icon="currency_rupee" label="Value" value={`₹${(totalAmount / 1000).toFixed(1)}k`} color="#10b981" />
+            <StatCard icon="currency_rupee" label="Total ₹" value={`₹${(totalAmount / 1000).toFixed(1)}k`} color="#10b981" />
           </div>
 
           {/* Add Invoice CTA */}
@@ -218,8 +259,8 @@ export const SubDBDashboard = () => {
               <span className="material-symbols-outlined fi" style={{ color: '#fff', fontSize: '1.3rem' }}>add_circle</span>
             </div>
             <div>
-              <p style={{ fontSize: '.95rem', fontWeight: 900, color: '#d4a574', margin: '0 0 .1rem' }}>Add New Invoice</p>
-              <p style={{ fontSize: '.7rem', color: '#666', margin: 0 }}>Upload image/PDF or enter manually</p>
+              <p style={{ fontSize: '.95rem', fontWeight: 900, color: '#d4a574', margin: '0 0 .1rem' }}>Upload Invoice PDF</p>
+              <p style={{ fontSize: '.7rem', color: 'var(--t3)', margin: 0 }}>AI OCR auto-extracts SKUs & credits retailer</p>
             </div>
             <span className="material-symbols-outlined fi" style={{ color: '#d4a574', fontSize: '1.3rem', marginLeft: 'auto' }}>chevron_right</span>
           </div>
@@ -244,17 +285,31 @@ export const SubDBDashboard = () => {
                   receipt_long
                 </span>
                 <p style={{ fontSize: '.85rem', fontWeight: 700, color: 'var(--t2)', margin: '0 0 .3rem' }}>No invoices yet</p>
-                <p style={{ fontSize: '.75rem', color: 'var(--t3)', margin: 0 }}>Tap "Add New Invoice" to get started</p>
+                <p style={{ fontSize: '.75rem', color: 'var(--t3)', margin: 0 }}>Tap "Upload Invoice PDF" to credit retailer</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
-                {invoices.map(inv => <InvoiceRow key={inv.id} inv={inv} />)}
+                {invoices.map(inv => (
+                  <InvoiceRow 
+                    key={inv.id} 
+                    inv={inv} 
+                    onClick={(i) => setSelectedInvoice(i)}
+                  />
+                ))}
               </div>
             )}
           </div>
 
         </div>
       </div>
+
+      {/* Invoice Detail Modal for Sub-DB View */}
+      {selectedInvoice && (
+        <InvoiceDetailModal
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
     </div>
   );
 };

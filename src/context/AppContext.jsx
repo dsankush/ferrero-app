@@ -306,6 +306,10 @@ export const AppProvider = ({ children }) => {
   const [kycDoc, setKycDocState] = useState(() => loadFromStorage('counterOS_kycDoc', null));
   const [complianceRedemptions, setComplianceRedemptions] = useState(() => loadFromStorage('counterOS_complianceRedemptions', []));
   const [complianceAuditLogs, setComplianceAuditLogs] = useState(() => loadFromStorage('counterOS_complianceAuditLogs', []));
+  const [supportTickets, setSupportTicketsState] = useState(() => loadFromStorage('counterOS_supportTickets', []));
+  const [latestInvoicePopup, setLatestInvoicePopup] = useState(null);
+  const clearInvoicePopup = () => setLatestInvoicePopup(null);
+  const showInvoicePopup = (inv) => setLatestInvoicePopup(inv);
 
   // Monthly Targets State
   const [monthlyTargets, setMonthlyTargets] = useState(() => loadFromStorage('counterOS_monthlyTargets', [
@@ -478,7 +482,82 @@ export const AppProvider = ({ children }) => {
   };
 
   const addNotification = (notif) => {
-    setNotifications(prev => [{ ...notif, id: Date.now(), isRead: false, time: 'Just now' }, ...prev]);
+    setNotifications(prev => [{ ...notif, id: Date.now(), isRead: false, is_read: false, time: 'Just now' }, ...prev]);
+  };
+
+  const markNotificationAsRead = (notifId) => {
+    setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, isRead: true, is_read: true } : n));
+    if (isSupabaseConfigured && typeof notifId === 'string' && notifId.length > 20) {
+      supabase.from('notifications').update({ is_read: true }).eq('id', notifId).then();
+    }
+  };
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true, is_read: true })));
+    if (isSupabaseConfigured && user?.id && !user.id.startsWith('local-')) {
+      supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id).then();
+    }
+  };
+
+  // ─── SUPPORT TICKETS & GRIEVANCE MANAGEMENT ─────────────────────────────────
+  const createSupportTicket = async (ticketData) => {
+    const ticketId = `TKT-${Math.floor(100000 + Math.random() * 900000)}`;
+    const newTicket = {
+      id: `ticket-${Date.now()}`,
+      ticket_id: ticketId,
+      user_id: user?.id?.startsWith('local-') ? null : user?.id,
+      retailer_name: ticketData.retailer_name || user?.name || 'Retailer Partner',
+      retailer_phone: ticketData.retailer_phone || user?.phone || '9876543210',
+      category: ticketData.category || 'other',
+      subject: ticketData.subject || 'Concern Ticket',
+      description: ticketData.description || '',
+      invoice_number: ticketData.invoice_number || null,
+      priority: ticketData.priority || 'Medium',
+      status: 'Open',
+      assigned_to: 'Ferrero Support Desk',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('support_tickets')
+          .insert([newTicket])
+          .select()
+          .single();
+        if (!error && data) {
+          setSupportTicketsState(prev => [data, ...prev]);
+          saveToStorage('counterOS_supportTickets', [data, ...supportTickets]);
+          return data;
+        }
+      } catch (err) {
+        console.warn('[AppContext] Supabase support_tickets insert error:', err.message);
+      }
+    }
+
+    const updated = [newTicket, ...supportTickets];
+    setSupportTicketsState(updated);
+    saveToStorage('counterOS_supportTickets', updated);
+    return newTicket;
+  };
+
+  const resolveSupportTicket = async (ticketId, resolutionNotes = 'Resolved by Ferrero Support') => {
+    if (isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('support_tickets')
+          .update({ status: 'Resolved', resolution_notes: resolutionNotes, updated_at: new Date().toISOString() })
+          .eq('id', ticketId);
+      } catch(err) {
+        console.warn('[AppContext] Supabase support ticket resolve error:', err.message);
+      }
+    }
+    setSupportTicketsState(prev => {
+      const updated = prev.map(t => (t.id === ticketId || t.ticket_id === ticketId) ? { ...t, status: 'Resolved', resolution_notes: resolutionNotes } : t);
+      saveToStorage('counterOS_supportTickets', updated);
+      return updated;
+    });
   };
 
   const addTransaction = (txn) => {
@@ -539,6 +618,16 @@ export const AppProvider = ({ children }) => {
       }
       if (e.key === 'counterOS_transactions' && e.newValue) {
         try { setTransactions(JSON.parse(e.newValue)); } catch(e) {}
+      }
+      if (e.key === 'counterOS_new_invoice_event' && e.newValue) {
+        try {
+          const invEvent = JSON.parse(e.newValue);
+          setLatestInvoicePopup(invEvent);
+          localStorage.removeItem('counterOS_new_invoice_event');
+        } catch(err) {}
+      }
+      if (e.key === 'counterOS_supportTickets' && e.newValue) {
+        try { setSupportTicketsState(JSON.parse(e.newValue)); } catch(e) {}
       }
       if (e.key === 'counterOS_notifications' && e.newValue) {
         try { setNotificationsState(JSON.parse(e.newValue)); } catch(e) {}
@@ -2603,7 +2692,17 @@ export const AppProvider = ({ children }) => {
     // Monthly Targets
     monthlyTargets,
     simulateTargetProgress,
-    claimTargetPoints
+    claimTargetPoints,
+    // Realtime Notifications & Popups
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    latestInvoicePopup,
+    clearInvoicePopup,
+    showInvoicePopup,
+    // Support & Disputes System
+    supportTickets,
+    createSupportTicket,
+    resolveSupportTicket
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

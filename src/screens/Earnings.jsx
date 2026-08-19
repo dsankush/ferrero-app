@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
+import { InvoiceDetailModal } from '../components/modals/InvoiceDetailModal';
+import { RaiseIssueModal } from '../components/modals/RaiseIssueModal';
 import { Header } from '../components/layout/Header';
 import { useAppContext } from '../context/AppContext';
 import { ProductIcon } from '../components/ui/ProductIcon';
@@ -268,10 +270,15 @@ export const Earnings = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
                   {subdbInvoices.slice(0, 3).map((inv, idx) => (
-                    <div key={idx} style={{
-                      background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)',
-                      padding: '.85rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-                    }}>
+                    <div 
+                      key={idx} 
+                      onClick={() => setSelectedInvoice(inv)}
+                      style={{
+                        background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)',
+                        padding: '.85rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        cursor: 'pointer', transition: 'transform 0.15s'
+                      }}
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '.7rem' }}>
                         <div style={{ width: '2.4rem', height: '2.4rem', background: 'rgba(212,165,116,.12)', borderRadius: '.6rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <span className="material-symbols-outlined fi" style={{ color: 'var(--g4)', fontSize: '1.2rem' }}>receipt</span>
@@ -570,23 +577,34 @@ export const Earnings = () => {
                   <h3 style={{ fontSize: '.9rem', fontWeight: 800, color: 'var(--t1)', margin: 0 }}>Sub-DB Verified Bills</h3>
                   <p style={{ fontSize: '.7rem', color: 'var(--t3)', margin: 0 }}>All bills uploaded by company reps</p>
                 </div>
-                <span style={{ fontSize: '.72rem', color: 'var(--g4)', fontWeight: 800 }}>{subdbInvoices.length} Invoices</span>
+                <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}>
+                  <a href="tel:+919876543210" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', color: '#10b981', padding: '.3rem .6rem', borderRadius: '9999px', fontSize: '.68rem', fontWeight: 800, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '.85rem' }}>call</span> Call Rep
+                  </a>
+                  <button onClick={() => setShowRaiseIssue(true)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', padding: '.3rem .6rem', borderRadius: '9999px', fontSize: '.68rem', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '.85rem' }}>report_problem</span> Report
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
                 {subdbInvoices.map((inv, idx) => (
-                  <div key={idx} style={{
-                    background: '#fff', border: '1.5px solid #d4a574', borderRadius: 'var(--r12)',
-                    padding: '1.1rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-                  }}>
+                  <div 
+                    key={idx} 
+                    onClick={() => setSelectedInvoice(inv)}
+                    style={{
+                      background: 'var(--bg2)', border: '1.5px solid var(--bdr2)', borderRadius: 'var(--r12)',
+                      padding: '1.1rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer'
+                    }}
+                  >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '.6rem' }}>
                       <div>
                         <span style={{ fontSize: '.68rem', fontWeight: 800, color: '#c41e3a', textTransform: 'uppercase' }}>{inv.invoice_number || 'INV-VERIFIED'}</span>
-                        <h4 style={{ fontSize: '.92rem', fontWeight: 900, color: '#2d2d2d', margin: '.1rem 0' }}>{inv.wholesaler_name}</h4>
-                        <p style={{ fontSize: '.68rem', color: '#999', margin: 0 }}>Date: {inv.purchase_date || 'Recent'}</p>
+                        <h4 style={{ fontSize: '.92rem', fontWeight: 900, color: 'var(--t1)', margin: '.1rem 0' }}>{inv.wholesaler_name}</h4>
+                        <p style={{ fontSize: '.68rem', color: 'var(--t3)', margin: 0 }}>Date: {inv.purchase_date || 'Recent'}</p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <p style={{ fontSize: '1.05rem', fontWeight: 900, color: '#d4a574', margin: 0 }}>₹{Number(inv.total_amount).toLocaleString('en-IN')}</p>
+                        <p style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--g4)', margin: 0 }}>₹{Number(inv.total_amount).toLocaleString('en-IN')}</p>
                         <span style={{ fontSize: '.6rem', fontWeight: 800, color: '#10b981', background: 'rgba(16,185,129,.1)', border: '1px solid #10b981', padding: '.15rem .45rem', borderRadius: '9999px' }}>
                           ✓ Stock Credited
                         </span>
@@ -594,12 +612,15 @@ export const Earnings = () => {
                     </div>
 
                     {inv.products && inv.products.length > 0 && (
-                      <div style={{ background: '#f9f8f5', border: '1px solid #eee', borderRadius: '8px', padding: '.6rem', marginTop: '.6rem' }}>
-                        <p style={{ fontSize: '.65rem', fontWeight: 700, color: '#999', textTransform: 'uppercase', margin: '0 0 .3rem 0' }}>Products Credited:</p>
+                      <div style={{ background: 'var(--bg3)', border: '1px solid var(--bdr)', borderRadius: '8px', padding: '.6rem', marginTop: '.6rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 0 .3rem 0' }}>
+                          <p style={{ fontSize: '.65rem', fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', margin: 0 }}>Products Credited:</p>
+                          <span style={{ fontSize: '.65rem', color: 'var(--g4)', fontWeight: 700 }}>Click to view bill breakdown →</span>
+                        </div>
                         {inv.products.map((p, pIdx) => (
-                          <div key={pIdx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.72rem', color: '#444', padding: '.15rem 0' }}>
+                          <div key={pIdx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.72rem', color: 'var(--t2)', padding: '.15rem 0' }}>
                             <span>• {p.name}</span>
-                            <strong style={{ color: '#2d2d2d' }}>{p.qty} {p.unit || 'boxes'}</strong>
+                            <strong style={{ color: 'var(--t1)' }}>{p.qty} {p.unit || 'boxes'}</strong>
                           </div>
                         ))}
                       </div>
@@ -612,6 +633,29 @@ export const Earnings = () => {
 
         </div>
       </div>
+
+      {/* Invoice Detail Modal */}
+      {selectedInvoice && (
+        <InvoiceDetailModal
+          invoice={selectedInvoice}
+          onClose={() => setSelectedInvoice(null)}
+          onRaiseIssue={(inv) => {
+            setIssueInvoiceRef(inv);
+            setShowRaiseIssue(true);
+          }}
+        />
+      )}
+
+      {/* Raise Concern / Dispute Modal */}
+      {showRaiseIssue && (
+        <RaiseIssueModal
+          invoice={issueInvoiceRef}
+          onClose={() => {
+            setShowRaiseIssue(false);
+            setIssueInvoiceRef(null);
+          }}
+        />
+      )}
     </AppLayout>
   );
 };

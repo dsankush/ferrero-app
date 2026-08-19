@@ -259,6 +259,19 @@ export const SubDBProvider = ({ children }) => {
         await updateMonthlyTargets(invoiceData.retailer_id, invoiceData.products);
       }
 
+      // 4. EMIT REAL-TIME EVENT FOR RETAILER POPUP
+      try {
+        localStorage.setItem('counterOS_new_invoice_event', JSON.stringify({
+          ...saved,
+          retailer_name: invoiceData.retailer_name,
+          total_amount: invoiceData.total_amount,
+          products: invoiceData.products,
+          invoice_number: invoiceData.invoice_number,
+          wholesaler_name: invoiceData.wholesaler_name,
+          timestamp: Date.now()
+        }));
+      } catch(e) {}
+
       showToast(`✅ Bill submitted! Stock credited to ${invoiceData.retailer_name}`, 'success');
       return saved;
     } catch (err) {
