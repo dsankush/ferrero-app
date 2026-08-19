@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     shop_name TEXT DEFAULT 'Sweet & Confectionery Store',
     location TEXT DEFAULT 'Central India',
     zone TEXT DEFAULT 'Central' CHECK (zone IN ('Central', 'North', 'West', 'South')),
+    points_balance INT NOT NULL DEFAULT 2025,
     pan_number TEXT,
     is_kyc_verified BOOLEAN DEFAULT false,
     gst_number TEXT,
@@ -27,6 +28,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Ensure points_balance column exists if table was already created
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS points_balance INT DEFAULT 2025;
 
 -- ─── 2. INVENTORY TABLE ───────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.inventory (
