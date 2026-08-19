@@ -10,7 +10,13 @@ export const ExecutiveDashboard = () => {
   useEffect(() => {
     document.documentElement.classList.add('full-page-mode');
     document.body.classList.add('full-page-mode');
-    const exportGrievancesCSV = () => {
+    return () => {
+      document.documentElement.classList.remove('full-page-mode');
+      document.body.classList.remove('full-page-mode');
+    };
+  }, []);
+
+  const exportGrievancesCSV = () => {
     const headers = ['Ticket ID', 'Retailer Shop Name', 'Retailer Phone', 'Category', 'Subject / Issue', 'Description', 'Invoice Ref', 'Assigned Wholesaler (Sub-DB)', 'Priority', 'Status', 'Logged Date'];
     const rows = (supportTickets || []).map(t => [
       t.ticket_id || t.id,
@@ -37,12 +43,6 @@ export const ExecutiveDashboard = () => {
     document.body.removeChild(link);
     showToast('📥 Downloaded Ferrero Retailer Queries Report CSV!', 'success');
   };
-
-  return () => {
-      document.documentElement.classList.remove('full-page-mode');
-      document.body.classList.remove('full-page-mode');
-    };
-  }, []);
 
   // ─── FILTER STATES ────────────────────────────────────────────────────────
   const [selectedZone, setSelectedZone] = useState('all');
