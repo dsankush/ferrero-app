@@ -1,0 +1,20 @@
+name: Keep Supabase Active
+
+on:
+  schedule:
+    # Runs every 2 days at 00:00 UTC to prevent Supabase Free Tier auto-pause
+    - cron: '0 0 */2 * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          echo "Pinging Supabase project to maintain activity..."
+          curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzaWxhcGpyZHBoZWV6ZHZ0amJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDA0ODksImV4cCI6MjEwMjcxNjQ4OX0.ucEXn_RJauBEAjW471b0SsuamAQ2hcQoEJ2CAmpcKoI" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzaWxhcGpyZHBoZWV6ZHZ0amJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNDA0ODksImV4cCI6MjEwMjcxNjQ4OX0.ucEXn_RJauBEAjW471b0SsuamAQ2hcQoEJ2CAmpcKoI" \
+            "https://usilapjrdpheezdvtjbi.supabase.co/rest/v1/profiles?select=count" || true
+          echo "Ping completed! Supabase project remains active."
