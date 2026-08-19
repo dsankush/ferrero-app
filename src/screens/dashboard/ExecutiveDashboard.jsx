@@ -5,12 +5,40 @@ import { showToast } from '../../components/ui/Toast';
 
 export const ExecutiveDashboard = () => {
   const navigate = useNavigate();
-  const { inventory, monthlyTargets, pointCredits } = useAppContext();
+  const { inventory, monthlyTargets, pointCredits, supportTickets = [], resolveSupportTicket } = useAppContext();
 
   useEffect(() => {
     document.documentElement.classList.add('full-page-mode');
     document.body.classList.add('full-page-mode');
-    return () => {
+    const exportGrievancesCSV = () => {
+    const headers = ['Ticket ID', 'Retailer Shop Name', 'Retailer Phone', 'Category', 'Subject / Issue', 'Description', 'Invoice Ref', 'Assigned Wholesaler (Sub-DB)', 'Priority', 'Status', 'Logged Date'];
+    const rows = (supportTickets || []).map(t => [
+      t.ticket_id || t.id,
+      `"${t.retailer_name || t.retailer || 'Retailer'}"`,
+      t.retailer_phone || t.phone || '',
+      `"${t.category || 'Other'}"`,
+      `"${(t.subject || '').replace(/"/g, '""')}"`,
+      `"${(t.description || '').replace(/"/g, '""')}"`,
+      t.invoice_number || 'N/A',
+      `"${t.assigned_to || 'Sub-DB Rep'}"`,
+      t.priority || 'Medium',
+      t.status || 'Open',
+      t.created_at ? new Date(t.created_at).toLocaleDateString() : 'Recent'
+    ]);
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Ferrero_Retailer_Queries_Report_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('📥 Downloaded Ferrero Retailer Queries Report CSV!', 'success');
+  };
+
+  return () => {
       document.documentElement.classList.remove('full-page-mode');
       document.body.classList.remove('full-page-mode');
     };
@@ -533,6 +561,21 @@ export const ExecutiveDashboard = () => {
       rows = filteredSubDBs.map(r => [
         `"${r.name}"`, r.empId, `"${r.reportingManager}"`, r.zone, `"${r.territory}"`, r.retailersCount, r.invoicesLogged, r.boxesRestocked, r.totalWholesaleSpend, `${r.targetPct}%`, `"${r.topSKU}"`, r.status
       ]);
+    } else if (activeTableView === 'tickets') {
+      headers = ['Ticket ID', 'Retailer Shop Name', 'Retailer Phone', 'Category', 'Subject / Issue', 'Description', 'Invoice Ref', 'Assigned Wholesaler (Sub-DB)', 'Priority', 'Status', 'Logged Date'];
+      rows = supportTickets.map(t => [
+        t.ticket_id || t.id,
+        `"${t.retailer_name || t.retailer || 'Retailer'}"`,
+        t.retailer_phone || t.phone || '',
+        `"${t.category || 'Other'}"`,
+        `"${(t.subject || '').replace(/"/g, '""')}"`,
+        `"${(t.description || '').replace(/"/g, '""')}"`,
+        t.invoice_number || 'N/A',
+        `"${t.assigned_to || 'Sub-DB'}"`,
+        t.priority || 'Medium',
+        t.status || 'Open',
+        t.created_at ? new Date(t.created_at).toLocaleDateString() : 'Recent'
+      ]);
     } else if (activeTableView === 'asm') {
       headers = ['Area Sales Manager', 'Role', 'Zone', 'Supervised Sub-DBs', 'Total Retailers', 'Total Bills', 'Boxes Restocked', 'Wholesale Spend (INR)', 'Target %', 'Top Sub-DB Rep'];
       rows = allASMData.map(a => [
@@ -1050,7 +1093,8 @@ export const ExecutiveDashboard = () => {
               { id: 'monthly_matrix', label: 'Monthly Quota & Restock Matrix', icon: 'calendar_month', count: filteredRetailers.length },
               { id: 'subdb', label: 'By Sub-DB Representative', icon: 'badge', count: filteredSubDBs.length },
               { id: 'asm', label: 'By Reporting Manager (ASM Rollup)', icon: 'supervisor_account', count: allASMData.length },
-              { id: 'sku', label: 'By Product SKU Performance', icon: 'inventory_2', count: skuBreakdown.length }
+              { id: 'sku', label: 'By Product SKU Performance', icon: 'inventory_2', count: skuBreakdown.length },
+              { id: 'tickets', label: 'Grievances & Dispute Tickets', icon: 'support_agent', count: supportTickets.length }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1313,6 +1357,107 @@ export const ExecutiveDashboard = () => {
         )}
 
         {/* ─── TABLE 5: BY PRODUCT SKU ─── */}
+        {activeTableView === 'tickets' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--g4)', margin: 0 }}>Grievances & Retailer Dispute Tickets</h3>
+                <p style={{ fontSize: '.75rem', color: '#999', margin: '2px 0 0 0' }}>Track, assign, and resolve billing disputes and claim queries logged by retailers.</p>
+              </div>
+              <button
+                onClick={exportGrievancesCSV}
+                style={{
+                  padding: '.5rem 1.1rem',
+                  background: 'linear-gradient(135deg, #d4a574, #c41e3a)',
+                  border: 'none',
+                  borderRadius: '10px',
+                  color: '#fff',
+                  fontSize: '.8rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '.4rem',
+                  boxShadow: '0 4px 15px rgba(212,165,116,0.3)'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>download</span>
+                📥 Export Grievances & Tickets CSV
+              </button>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.82rem' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1.5px solid rgba(212,165,116,.2)', color: 'var(--g4)', textAlign: 'left' }}>
+                    <th style={{ padding: '.8rem 1rem' }}>Ticket ID</th>
+                    <th style={{ padding: '.8rem 1rem' }}>Retailer Shop</th>
+                    <th style={{ padding: '.8rem 1rem' }}>Phone</th>
+                    <th style={{ padding: '.8rem 1rem' }}>Category</th>
+                    <th style={{ padding: '.8rem 1rem' }}>Subject & Issue</th>
+                    <th style={{ padding: '.8rem 1rem' }}>Invoice Ref</th>
+                    <th style={{ padding: '.8rem 1rem' }}>Priority</th>
+                    <th style={{ padding: '.8rem 1rem' }}>Status</th>
+                    <th style={{ padding: '.8rem 1rem', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(supportTickets || []).map(t => (
+                    <tr key={t.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}>
+                      <td style={{ padding: '.8rem 1rem', fontWeight: 800, color: 'var(--g4)' }}>{t.ticket_id || t.id}</td>
+                      <td style={{ padding: '.8rem 1rem', fontWeight: 700, color: '#fff' }}>{t.retailer_name || t.retailer || 'Retailer'}</td>
+                      <td style={{ padding: '.8rem 1rem', color: '#bbb' }}>{t.retailer_phone || t.phone || '9876543210'}</td>
+                      <td style={{ padding: '.8rem 1rem' }}>
+                        <span style={{ fontSize: '.7rem', fontWeight: 800, padding: '.2rem .5rem', borderRadius: '6px', background: 'rgba(212,165,116,0.1)', color: '#d4a574', border: '1px solid rgba(212,165,116,0.3)' }}>
+                          {(t.category || 'Dispute').replace('_', ' ').toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={{ padding: '.8rem 1rem', maxWidth: '280px' }}>
+                        <p style={{ margin: 0, fontWeight: 700, color: '#fff' }}>{t.subject}</p>
+                        <p style={{ margin: '2px 0 0 0', fontSize: '.72rem', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.description}</p>
+                      </td>
+                      <td style={{ padding: '.8rem 1rem', fontWeight: 700, color: t.invoice_number ? '#38bdf8' : '#666' }}>{t.invoice_number || 'N/A'}</td>
+                      <td style={{ padding: '.8rem 1rem' }}>
+                        <span style={{
+                          fontSize: '.68rem', fontWeight: 900, padding: '.15rem .45rem', borderRadius: '4px',
+                          color: t.priority === 'High' ? '#ef4444' : t.priority === 'Medium' ? '#f59e0b' : '#10b981',
+                          background: t.priority === 'High' ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)'
+                        }}>
+                          {t.priority || 'Medium'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '.8rem 1rem' }}>
+                        <span style={{
+                          fontSize: '.68rem', fontWeight: 900, padding: '.15rem .45rem', borderRadius: '4px',
+                          color: t.status === 'Resolved' ? '#10b981' : t.status === 'In Review' ? '#38bdf8' : '#f43f5e',
+                          background: t.status === 'Resolved' ? 'rgba(16,185,129,0.15)' : 'rgba(244,63,94,0.15)'
+                        }}>
+                          {t.status || 'Open'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '.8rem 1rem', textAlign: 'right' }}>
+                        {t.status !== 'Resolved' ? (
+                          <button
+                            onClick={() => resolveSupportTicket(t.id, 'Resolved by Executive Support')}
+                            style={{
+                              padding: '.3rem .6rem', background: 'rgba(16,185,129,0.15)', border: '1px solid #10b981',
+                              borderRadius: '6px', color: '#10b981', fontSize: '.7rem', fontWeight: 800, cursor: 'pointer'
+                            }}
+                          >
+                            Mark Resolved
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: '.7rem', color: '#10b981', fontWeight: 700 }}>✓ Resolved</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {activeTableView === 'sku' && (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '.84rem' }}>
