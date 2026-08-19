@@ -9,8 +9,10 @@ import { ProductIcon } from '../components/ui/ProductIcon';
 
 export const Earnings = () => {
   const navigate = useNavigate();
-  const { user, inventory, transactions, monthlyTargets, pointCredits, walletBalance } = useAppContext();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'targets' | 'restock' | 'invoices'
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [showRaiseIssue, setShowRaiseIssue] = useState(false);
+  const [issueInvoiceRef, setIssueInvoiceRef] = useState(null);
 
   // ─── 1. RESTOCKING VELOCITY & INVENTORY FOUNDATION ─────────────────────────
   // Total units across current stock
