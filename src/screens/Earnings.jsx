@@ -9,6 +9,7 @@ import { ProductIcon } from '../components/ui/ProductIcon';
 
 export const Earnings = () => {
   const navigate = useNavigate();
+  const { user, inventory, transactions, monthlyTargets, pointCredits, walletBalance } = useAppContext();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'targets' | 'restock' | 'invoices'
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showRaiseIssue, setShowRaiseIssue] = useState(false);
@@ -16,12 +17,12 @@ export const Earnings = () => {
 
   // ─── 1. RESTOCKING VELOCITY & INVENTORY FOUNDATION ─────────────────────────
   // Total units across current stock
-  const totalStockUnits = inventory.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
+  const totalStockUnits = (inventory || []).reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
   
   // Restock purchase transactions from Sub-DB
-  const restockTxns = transactions.filter(t => t.type === 'purchase' || t.label?.toLowerCase().includes('sub-db') || t.label?.toLowerCase().includes('wholesaler') || t.label?.toLowerCase().includes('restock'));
+  const restockTxns = (transactions || []).filter(t => t?.type === 'purchase' || t?.label?.toLowerCase().includes('sub-db') || t?.label?.toLowerCase().includes('wholesaler') || t?.label?.toLowerCase().includes('restock'));
   const totalRestockSpend = restockTxns.reduce((sum, t) => {
-    const num = Number(String(t.amt).replace(/[^0-9.-]+/g, '')) || 0;
+    const num = Number(String(t?.amt || '').replace(/[^0-9.-]+/g, '')) || 0;
     return sum + num;
   }, 0) || 73450;
 
