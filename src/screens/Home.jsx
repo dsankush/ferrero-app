@@ -863,7 +863,7 @@ Wallet: ₹${walletBalance}`;
                      <div style={{ display: 'flex', gap: '.5rem', marginTop: '.25rem' }}>
                        {!isClaimed && (
                          <button
-                           onClick={() => simulateTargetProgress(t.id, t.id === 'target-3' ? 50 : 1)}
+                           onClick={() => simulateTargetProgress(t.id, t.id === 'target-3' ? 250 : 15)}
                            style={{
                              flex: 1,
                              padding: '.35rem .6rem',
@@ -881,7 +881,7 @@ Wallet: ₹${walletBalance}`;
                            }}
                          >
                            <span className="material-symbols-outlined" style={{ fontSize: '.85rem' }}>add</span>
-                           Simulate {t.id === 'target-3' ? '+₹50' : '+1'}
+                           Simulate {t.id === 'target-3' ? '+250' : '+15'}
                          </button>
                        )}
 

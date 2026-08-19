@@ -2497,10 +2497,20 @@ export const AppProvider = ({ children }) => {
       const next = prev.map(t => {
         if (t.id === targetId) {
           if (t.status === 'claimed') return t;
-          const nextVal = Math.min(Number(t.target_value), Number(t.current_value) + Number(increment || 1));
-          const nextStatus = nextVal >= Number(t.target_value) ? 'completed' : 'in_progress';
+          const tgtVal = Number(t.target_value ?? t.target_boxes ?? 1) || 1;
+          const curVal = Number(t.current_value ?? t.restocked_boxes ?? 0) || 0;
+          const incVal = Number(increment) || 1;
+          const nextVal = Math.min(tgtVal, curVal + incVal);
+          const nextStatus = nextVal >= tgtVal ? 'completed' : 'in_progress';
           
-          const targetUpdated = { ...t, current_value: nextVal, status: nextStatus };
+          const targetUpdated = { 
+            ...t, 
+            current_value: nextVal, 
+            restocked_boxes: nextVal,
+            target_value: tgtVal,
+            target_boxes: tgtVal,
+            status: nextStatus 
+          };
           if (nextStatus === 'completed' && t.status !== 'completed') {
             completedTarget = targetUpdated;
           }
@@ -2514,7 +2524,8 @@ export const AppProvider = ({ children }) => {
     });
 
     if (completedTarget) {
-      showToast(`🎯 Target Completed: "${completedTarget.title}"! Tap "Claim" to add +${completedTarget.points_reward} pts.`, 'success');
+      const rewardPts = Number(completedTarget.points_reward ?? completedTarget.bonus_points ?? 500);
+      showToast(`🎯 Target Completed: "${completedTarget.title || 'Monthly Quota'}"! Tap "Claim" to get +${rewardPts} pts.`, 'success');
     } else {
       showToast(`📈 Target progress updated!`, 'success');
     }
@@ -2522,11 +2533,12 @@ export const AppProvider = ({ children }) => {
     if (isSupabaseConfigured) {
       try {
         const targetToUpdate = updatedTargets.find(t => t.id === targetId);
-        if (targetToUpdate && !targetId.startsWith('target-')) {
+        if (targetToUpdate && !targetId.startsWith('target-') && !targetId.startsWith('t')) {
           await supabase
             .from('retailer_monthly_targets')
             .update({ 
-              current_value: targetToUpdate.current_value, 
+              current_value: targetToUpdate.current_value,
+              restocked_boxes: targetToUpdate.current_value,
               status: targetToUpdate.status,
               updated_at: new Date().toISOString()
             })
@@ -2544,7 +2556,11 @@ export const AppProvider = ({ children }) => {
     
     setMonthlyTargets(prev => {
       const next = prev.map(t => {
-        if (t.id === targetId && (t.status === 'completed' || Number(t.current_value) >= Number(t.target_value))) {
+        const tgtVal = Number(t.target_value ?? t.target_boxes ?? 1) || 1;
+        const curVal = Number(t.current_value ?? t.restocked_boxes ?? 0) || 0;
+        const isDone = t.status === 'completed' || t.status === 'COMPLETED' || curVal >= tgtVal;
+
+        if (t.id === targetId && isDone && t.status !== 'claimed') {
           targetToClaim = t;
           return { ...t, status: 'claimed' };
         }
@@ -2560,20 +2576,10 @@ export const AppProvider = ({ children }) => {
       return false;
     }
 
-    const pointsReward = Number(targetToClaim.points_reward) || 500;
-    const currentPoints = Number(user?.points_balance !== undefined ? user.points_balance : pointCreditsState) || 0;
-    const nextPoints = currentPoints + pointsReward;
-
-    // 1. Immediately update local UI state & localStorage
-    setPointCreditsState(nextPoints);
-    saveToStorage('counterOS_pointCredits', nextPoints);
-
-    setUserState(prev => {
-      if (!prev) return prev;
-      const updated = { ...prev, points_balance: nextPoints };
-      saveToStorage(STORAGE_KEYS.user, updated);
-      return updated;
-    });
+    const pointsReward = Number(targetToClaim.points_reward ?? targetToClaim.bonus_points ?? 500) || 500;
+    
+    // 1. Immediately update point credits and profile balance
+    addPointCredits(pointsReward, `Target Milestone Claim: ${targetToClaim.title || 'Monthly Quota'}`);
 
     addTransaction({
       type: 'points_claim',
