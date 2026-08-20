@@ -139,19 +139,24 @@ const InvoiceRow = ({ inv, onClick }) => {
         <p style={{ fontSize: '.65rem', color: 'var(--t3)', margin: 0 }}>
           {date} · {inv.retailer_name || 'No retailer'} · {products.length} item{products.length !== 1 ? 's' : ''} <span style={{ color: 'var(--g4)', fontWeight: 700 }}>· View →</span>
         </p>
+        {inv.status === 'rejected' && inv.rejection_reason && (
+          <p style={{ fontSize: '.65rem', color: '#ef4444', fontWeight: 800, margin: '.2rem 0 0 0' }}>
+            ⚠️ Rejection Reason: {inv.rejection_reason}
+          </p>
+        )}
       </div>
       <div style={{ textAlign: 'right', flexShrink: 0 }}>
         <p style={{ fontSize: '.9rem', fontWeight: 900, color: 'var(--t1)', margin: 0 }}>
           ₹{Number(inv.total_amount || 0).toLocaleString('en-IN')}
         </p>
         <span style={{
-          fontSize: '.6rem', fontWeight: 800, padding: '.15rem .5rem',
+          fontSize: '.62rem', fontWeight: 900, padding: '.18rem .55rem',
           borderRadius: '9999px',
-          background: inv.status === 'verified' ? 'rgba(16,185,129,.1)' : 'rgba(212,165,116,.1)',
-          color: inv.status === 'verified' ? '#10b981' : '#d4a574',
-          border: `1px solid ${inv.status === 'verified' ? 'rgba(16,185,129,.3)' : 'rgba(212,165,116,.3)'}`
+          background: inv.status === 'verified' ? 'rgba(16,185,129,.15)' : inv.status === 'rejected' ? 'rgba(239,68,68,.15)' : 'rgba(212,165,116,.15)',
+          color: inv.status === 'verified' ? '#10b981' : inv.status === 'rejected' ? '#ef4444' : '#d4a574',
+          border: `1px solid ${inv.status === 'verified' ? 'rgba(16,185,129,.4)' : inv.status === 'rejected' ? 'rgba(239,68,68,.4)' : 'rgba(212,165,116,.4)'}`
         }}>
-          {inv.status || 'submitted'}
+          {inv.status === 'verified' ? '✓ Verified' : inv.status === 'rejected' ? '✕ Rejected' : '⏳ Pending Audit'}
         </span>
       </div>
     </div>

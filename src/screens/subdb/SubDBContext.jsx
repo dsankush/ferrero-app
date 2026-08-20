@@ -29,6 +29,35 @@ const clearSession = () => localStorage.removeItem(STORAGE_KEY);
 // ─── Provider ─────────────────────────────────────────────────────────────────
 export const SubDBProvider = ({ children }) => {
   const [subUser, setSubUserState] = useState(() => loadSession());
+
+  useEffect(() => {
+    const checkSubDBNotifications = () => {
+      try {
+        const raw = localStorage.getItem('counterOS_popup_for_subdb');
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (Date.now() - (data.savedAt || 0) < 120000) {
+            showToast(`🔔 ${data.title}: ${data.body}`, 'info');
+            localStorage.removeItem('counterOS_popup_for_subdb');
+          }
+        }
+      } catch (e) {}
+    };
+
+    checkSubDBNotifications();
+    const handleStorage = (e) => {
+      if (e.key === 'counterOS_popup_for_subdb' || e.key === 'subdb_invoices') {
+        checkSubDBNotifications();
+        loadInvoices();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    const interval = setInterval(checkSubDBNotifications, 3000);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
   const [invoices, setInvoices] = useState([]);
   const [retailers, setRetailers] = useState([]);
   const [loading, setLoading] = useState(false);

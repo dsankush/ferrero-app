@@ -481,8 +481,53 @@ export const AppProvider = ({ children }) => {
     return true;
   };
 
-  const addNotification = (notif) => {
-    setNotifications(prev => [{ ...notif, id: Date.now(), isRead: false, is_read: false, time: 'Just now' }, ...prev]);
+  const addNotification = async (notif) => {
+    const notifObj = {
+      ...notif,
+      id: notif.id || `notif-${Date.now()}`,
+      user_id: notif.user_id || (user?.id?.startsWith('local-') ? null : user?.id),
+      role: notif.role || 'retailer',
+      title: notif.title || 'System Notification',
+      body: notif.body || '',
+      type: notif.type || 'notification',
+      isRead: false,
+      is_read: false,
+      created_at: new Date().toISOString(),
+      time: 'Just now'
+    };
+
+    setNotifications(prev => {
+      const next = [notifObj, ...prev];
+      saveToStorage(STORAGE_KEYS.notifications, next);
+      return next;
+    });
+
+    try {
+      const targetRole = notifObj.role || 'retailer';
+      const eventData = {
+        title: notifObj.title,
+        body: notifObj.body,
+        savedAt: Date.now(),
+        role: targetRole
+      };
+      localStorage.setItem(`counterOS_popup_for_${targetRole}`, JSON.stringify(eventData));
+      localStorage.setItem('counterOS_notification_signal', JSON.stringify({ ...eventData, time: Date.now() }));
+      window.dispatchEvent(new Event('storage'));
+    } catch (e) {}
+
+    if (isSupabaseConfigured) {
+      try {
+        await supabase.from('notifications').insert([{
+          user_id: notifObj.user_id,
+          title: notifObj.title,
+          body: notifObj.body,
+          role: notifObj.role,
+          type: notifObj.type
+        }]);
+      } catch (err) {
+        console.warn('Supabase notification insert note:', err.message);
+      }
+    }
   };
 
   const markNotificationAsRead = (notifId) => {
@@ -2769,15 +2814,51 @@ export const AppProvider = ({ children }) => {
   };
 
   const rejectPendingInvoice = async (invoiceId, reason = 'Invoice rejected during audit') => {
+    let rejectedInv = null;
+
     if (isSupabaseConfigured) {
       try {
-        await supabase
+        const { data, error } = await supabase
           .from('subdb_invoices')
-          .update({ status: 'rejected', updated_at: new Date().toISOString() })
-          .eq('id', invoiceId);
+          .update({
+            status: 'rejected',
+            rejection_reason: reason,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', invoiceId)
+          .select()
+          .single();
+        if (!error && data) rejectedInv = data;
       } catch (e) {}
     }
-    showToast('⚠️ Invoice has been rejected.', 'info');
+
+    if (!rejectedInv) {
+      try {
+        const raw = localStorage.getItem('subdb_invoices');
+        if (raw) {
+          const list = JSON.parse(raw);
+          const idx = list.findIndex(i => i.id === invoiceId);
+          if (idx !== -1) {
+            list[idx].status = 'rejected';
+            list[idx].rejection_reason = reason;
+            rejectedInv = list[idx];
+            localStorage.setItem('subdb_invoices', JSON.stringify(list));
+          }
+        }
+      } catch (e) {}
+    }
+
+    const invNum = rejectedInv?.invoice_number || 'INV';
+    const retName = rejectedInv?.retailer_name || 'Retailer';
+
+    addNotification({
+      title: '⚠️ Sub-DB Invoice Rejected During Audit',
+      body: `Invoice #${invNum} for ${retName} was rejected. Reason: ${reason}`,
+      role: 'subdb',
+      type: 'rejection'
+    });
+
+    showToast(`⚠️ Invoice #${invNum} rejected. Rejection notification sent to Sub-DB.`, 'info');
     return true;
   };
 

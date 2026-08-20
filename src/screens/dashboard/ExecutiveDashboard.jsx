@@ -16,6 +16,304 @@ export const ExecutiveDashboard = () => {
     };
   }, []);
 
+  if (currentView === 'invoices_page') {
+    const verifiedInvoices = allInvoices.filter(i => i.status === 'verified');
+    const rejectedInvoices = allInvoices.filter(i => i.status === 'rejected');
+    const totalVerifiedAmt = verifiedInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0) || 542000;
+
+    return (
+      <div style={{ minHeight: '100vh', width: '100%', background: '#0d0806', color: '#f3f4f6', fontFamily: 'var(--fb, sans-serif)', padding: '2rem 3rem', overflowY: 'auto' }}>
+        
+        {/* ── DEDICATED PAGE HEADER ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '2px solid rgba(212,165,116,.25)', paddingBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            <div style={{ width: '3.8rem', height: '3.8rem', background: 'linear-gradient(135deg, #10b981, #059669)', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', boxShadow: '0 6px 20px rgba(16,185,129,.3)' }}>
+              🧾
+            </div>
+            <div>
+              <span style={{ fontSize: '.75rem', fontWeight: 900, background: 'rgba(16,185,129,.2)', color: '#10b981', padding: '.2rem .6rem', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '.08em', border: '1px solid #10b981' }}>
+                Executive Audit &amp; Sub-DB Verification Management Hub
+              </span>
+              <h1 style={{ fontSize: '1.85rem', fontWeight: 900, color: '#fff', margin: '.3rem 0 0 0' }}>
+                Sub-DB Invoices Verification &amp; Audit Hub
+              </h1>
+              <p style={{ fontSize: '.8rem', color: '#aaa', margin: '3px 0 0 0' }}>
+                Audit submitted wholesaler bills, verify line items, approve stock &amp; target credits, or log rejection reasons with automated Sub-DB alerts.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setCurrentView('main')}
+            style={{
+              padding: '.75rem 1.5rem',
+              background: 'linear-gradient(135deg, #d4a574, #c41e3a)',
+              border: 'none',
+              borderRadius: '12px',
+              color: '#fff',
+              fontWeight: 900,
+              fontSize: '.9rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '.5rem',
+              boxShadow: '0 4px 16px rgba(212,165,116,0.3)'
+            }}
+          >
+            ← Back to Main Dashboard
+          </button>
+        </div>
+
+        {/* ── SUMMARY STAT CARDS ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginBottom: '2rem' }}>
+          <div style={{ background: '#160e0a', border: '1.5px solid #d4a574', borderRadius: '16px', padding: '1.25rem' }}>
+            <p style={{ fontSize: '.72rem', color: '#aaa', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>⏳ Pending Approvals</p>
+            <p style={{ fontSize: '2rem', fontWeight: 900, color: '#d4a574', margin: '.2rem 0 0 0' }}>{pendingInvoices.length} Bills</p>
+            <p style={{ fontSize: '.7rem', color: '#888', margin: '4px 0 0 0' }}>Awaiting executive audit</p>
+          </div>
+
+          <div style={{ background: '#160e0a', border: '1.5px solid #10b981', borderRadius: '16px', padding: '1.25rem' }}>
+            <p style={{ fontSize: '.72rem', color: '#aaa', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>✅ Approved &amp; Verified</p>
+            <p style={{ fontSize: '2rem', fontWeight: 900, color: '#10b981', margin: '.2rem 0 0 0' }}>{verifiedInvoices.length} Bills</p>
+            <p style={{ fontSize: '.7rem', color: '#888', margin: '4px 0 0 0' }}>Credited to retailer stock</p>
+          </div>
+
+          <div style={{ background: '#160e0a', border: '1.5px solid #ef4444', borderRadius: '16px', padding: '1.25rem' }}>
+            <p style={{ fontSize: '.72rem', color: '#aaa', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>✕ Rejected Log</p>
+            <p style={{ fontSize: '2rem', fontWeight: 900, color: '#ef4444', margin: '.2rem 0 0 0' }}>{rejectedInvoices.length} Bills</p>
+            <p style={{ fontSize: '.7rem', color: '#888', margin: '4px 0 0 0' }}>Sub-DB notification sent</p>
+          </div>
+
+          <div style={{ background: '#160e0a', border: '1.5px solid #38bdf8', borderRadius: '16px', padding: '1.25rem' }}>
+            <p style={{ fontSize: '.72rem', color: '#aaa', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>🛡️ Total Audited Value</p>
+            <p style={{ fontSize: '1.8rem', fontWeight: 900, color: '#38bdf8', margin: '.2rem 0 0 0' }}>₹{totalVerifiedAmt.toLocaleString('en-IN')}</p>
+            <p style={{ fontSize: '.7rem', color: '#888', margin: '4px 0 0 0' }}>Wholesale restock spend</p>
+          </div>
+        </div>
+
+        {/* ── TAB FILTER BAR ── */}
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '.75rem' }}>
+          {[
+            { id: 'pending', label: `⏳ Pending Verification Queue (${pendingInvoices.length})`, color: '#d4a574' },
+            { id: 'verified', label: `✅ Approved & Verified History (${verifiedInvoices.length})`, color: '#10b981' },
+            { id: 'rejected', label: `✕ Rejected Invoices & Audit Trail (${rejectedInvoices.length})`, color: '#ef4444' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setInvoicesPageTab(tab.id)}
+              style={{
+                padding: '.7rem 1.4rem',
+                borderRadius: '10px',
+                background: invoicesPageTab === tab.id ? tab.color : 'rgba(255,255,255,0.04)',
+                border: invoicesPageTab === tab.id ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                color: invoicesPageTab === tab.id ? '#1d120d' : '#ccc',
+                fontWeight: 900,
+                fontSize: '.85rem',
+                cursor: 'pointer'
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── TAB 1: PENDING VERIFICATION QUEUE ── */}
+        {invoicesPageTab === 'pending' && (
+          <div>
+            {pendingInvoices.length === 0 ? (
+              <div style={{ padding: '3.5rem', textAlign: 'center', background: '#160e0a', borderRadius: '16px', border: '1px border-dashed rgba(212,165,116,0.3)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '3.5rem', color: '#10b981', display: 'block', marginBottom: '.5rem' }}>task_alt</span>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fff', margin: 0 }}>No Invoices Awaiting Audit</h3>
+                <p style={{ fontSize: '.8rem', color: '#888', margin: '4px 0 0 0' }}>All submitted Sub-DB invoices have been processed.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {pendingInvoices.map((inv, idx) => (
+                  <div key={inv.id || idx} style={{ background: '#160e0a', border: '1.5px solid #d4a574', borderRadius: '16px', padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '.4rem' }}>
+                        <span style={{ fontSize: '.7rem', fontWeight: 900, background: 'rgba(212,165,116,0.2)', color: '#d4a574', padding: '.2rem .6rem', borderRadius: '6px' }}>
+                          #{inv.invoice_number}
+                        </span>
+                        <span style={{ fontSize: '.7rem', color: '#aaa' }}>📅 {inv.purchase_date}</span>
+                        <span style={{ fontSize: '.68rem', fontWeight: 800, padding: '.15rem .5rem', borderRadius: '4px', background: 'rgba(16,185,129,0.15)', color: '#10b981' }}>
+                          Digital Scan Confidence: 98%
+                        </span>
+                      </div>
+
+                      <h4 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#fff', margin: '0 0 .2rem 0' }}>
+                        🏪 {inv.retailer_name}
+                      </h4>
+                      <p style={{ fontSize: '.78rem', color: 'var(--g4)', fontWeight: 700, margin: '0 0 .4rem 0' }}>
+                        Wholesaler (Sub-DB): {inv.wholesaler_name}
+                      </p>
+
+                      <p style={{ fontSize: '.75rem', color: '#ccc', margin: 0 }}>
+                        📦 Line Items: {(inv.products || inv.items_json || []).map(p => `${p.name} (${p.qty} ${p.unit || 'Box'})`).join(' · ') || 'Ferrero Products'}
+                      </p>
+                    </div>
+
+                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '.75rem', marginLeft: '2rem' }}>
+                      <p style={{ fontSize: '1.3rem', fontWeight: 900, color: '#10b981', margin: 0 }}>
+                        ₹{Number(inv.total_amount || 0).toLocaleString('en-IN')}
+                      </p>
+                      <div style={{ display: 'flex', gap: '.6rem' }}>
+                        <button
+                          onClick={async () => {
+                            await approvePendingInvoice(inv.id);
+                            loadPendingInvoices();
+                          }}
+                          style={{
+                            padding: '.55rem 1.1rem', background: 'linear-gradient(135deg, #10b981, #059669)',
+                            border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 900, fontSize: '.82rem', cursor: 'pointer'
+                          }}
+                        >
+                          ✓ Approve &amp; Verify
+                        </button>
+                        <button
+                          onClick={() => setRejectionModalInv(inv)}
+                          style={{
+                            padding: '.55rem 1rem', background: 'rgba(239,68,68,0.15)',
+                            border: '1px solid #ef4444', borderRadius: '8px', color: '#ef4444', fontWeight: 900, fontSize: '.82rem', cursor: 'pointer'
+                          }}
+                        >
+                          ✕ Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB 2: VERIFIED & APPROVED HISTORY ── */}
+        {invoicesPageTab === 'verified' && (
+          <div style={{ background: '#160e0a', border: '1px solid rgba(212,165,116,0.2)', borderRadius: '16px', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.84rem', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', borderBottom: '1px solid rgba(16,185,129,0.2)', textTransform: 'uppercase', fontSize: '.72rem' }}>
+                  <th style={{ padding: '1rem' }}>Invoice No</th>
+                  <th style={{ padding: '1rem' }}>Retailer Shop</th>
+                  <th style={{ padding: '1rem' }}>Wholesaler Sub-DB</th>
+                  <th style={{ padding: '1rem' }}>Items Breakdown</th>
+                  <th style={{ padding: '1rem', textAlign: 'right' }}>Total Amount</th>
+                  <th style={{ padding: '1rem', textAlign: 'center' }}>Points Disbursed</th>
+                  <th style={{ padding: '1rem', textAlign: 'center' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {verifiedInvoices.map((inv, idx) => (
+                  <tr key={inv.id || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '1rem', fontWeight: 900, color: '#fff' }}>#{inv.invoice_number}</td>
+                    <td style={{ padding: '1rem', fontWeight: 800, color: '#d4a574' }}>🏪 {inv.retailer_name}</td>
+                    <td style={{ padding: '1rem', color: '#ccc' }}>🏢 {inv.wholesaler_name}</td>
+                    <td style={{ padding: '1rem', color: '#aaa', fontSize: '.78rem' }}>{(inv.products || []).map(p => `${p.name} (${p.qty})`).join(', ')}</td>
+                    <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 900, color: '#10b981' }}>₹{Number(inv.total_amount || 0).toLocaleString('en-IN')}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center', fontWeight: 900, color: '#ffd060' }}>+5,000 pts</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                      <span style={{ fontSize: '.68rem', fontWeight: 900, padding: '.25rem .6rem', borderRadius: '9999px', background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid #10b981' }}>
+                        ✓ Approved
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ── TAB 3: REJECTED INVOICES LOG & AUDIT TRAIL ── */}
+        {invoicesPageTab === 'rejected' && (
+          <div style={{ background: '#160e0a', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '16px', overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.84rem', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderBottom: '1px solid rgba(239,68,68,0.2)', textTransform: 'uppercase', fontSize: '.72rem' }}>
+                  <th style={{ padding: '1rem' }}>Invoice No</th>
+                  <th style={{ padding: '1rem' }}>Retailer Shop</th>
+                  <th style={{ padding: '1rem' }}>Wholesaler Sub-DB</th>
+                  <th style={{ padding: '1rem' }}>Rejection Reason</th>
+                  <th style={{ padding: '1rem', textAlign: 'right' }}>Amount</th>
+                  <th style={{ padding: '1rem', textAlign: 'center' }}>Sub-DB Notification</th>
+                  <th style={{ padding: '1rem', textAlign: 'center' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rejectedInvoices.map((inv, idx) => (
+                  <tr key={inv.id || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '1rem', fontWeight: 900, color: '#fff' }}>#{inv.invoice_number}</td>
+                    <td style={{ padding: '1rem', fontWeight: 800, color: '#d4a574' }}>🏪 {inv.retailer_name}</td>
+                    <td style={{ padding: '1rem', color: '#ccc' }}>🏢 {inv.wholesaler_name}</td>
+                    <td style={{ padding: '1rem', color: '#ef4444', fontWeight: 700 }}>⚠️ {inv.rejection_reason || 'Price Mismatch during Audit'}</td>
+                    <td style={{ padding: '1rem', textAlign: 'right', fontWeight: 800, color: '#aaa' }}>₹{Number(inv.total_amount || 0).toLocaleString('en-IN')}</td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                      <span style={{ fontSize: '.68rem', fontWeight: 800, padding: '.2rem .5rem', borderRadius: '4px', background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>
+                        Sent to Sub-DB
+                      </span>
+                    </td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                      <span style={{ fontSize: '.68rem', fontWeight: 900, padding: '.25rem .6rem', borderRadius: '9999px', background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid #ef4444' }}>
+                        ✕ Rejected
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ── REJECTION REASON MODAL ON PAGE ── */}
+        {rejectionModalInv && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}>
+            <div style={{ background: '#160e0a', border: '2px solid #ef4444', borderRadius: '20px', width: '100%', maxWidth: '440px', padding: '1.5rem', boxShadow: '0 10px 40px rgba(0,0,0,0.9)' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 900, color: '#ef4444', margin: '0 0 .5rem 0' }}>
+                ✕ Reject Invoice #{rejectionModalInv.invoice_number}
+              </h3>
+              <p style={{ fontSize: '.78rem', color: '#ccc', marginBottom: '1rem' }}>
+                Logging a rejection will notify <strong>{rejectionModalInv.wholesaler_name}</strong> and move the bill to the rejected history log.
+              </p>
+
+              <label style={{ fontSize: '.7rem', fontWeight: 800, color: '#aaa', display: 'block', marginBottom: '.3rem' }}>Select Rejection Reason *</label>
+              <select
+                style={{ width: '100%', padding: '.65rem', background: '#221510', border: '1px solid #ef4444', borderRadius: '8px', color: '#fff', fontSize: '.82rem', marginBottom: '1.25rem' }}
+                value={rejectionReasonInput}
+                onChange={e => setRejectionReasonInput(e.target.value)}
+              >
+                <option value="Illegible / Unclear Scanned PDF Image">Illegible / Unclear Scanned PDF Image</option>
+                <option value="Price Mismatch with Wholesale Master Rates">Price Mismatch with Wholesale Master Rates</option>
+                <option value="Duplicate Invoice Submission">Duplicate Invoice Submission</option>
+                <option value="Unregistered Retailer Outlet Account">Unregistered Retailer Outlet Account</option>
+                <option value="Quantity Mismatch during Audit">Quantity Mismatch during Audit</option>
+              </select>
+
+              <div style={{ display: 'flex', gap: '.75rem' }}>
+                <button
+                  onClick={async () => {
+                    await rejectPendingInvoice(rejectionModalInv.id, rejectionReasonInput);
+                    setRejectionModalInv(null);
+                    loadPendingInvoices();
+                  }}
+                  style={{ flex: 1.5, padding: '.75rem', background: '#ef4444', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: 900, fontSize: '.85rem', cursor: 'pointer' }}
+                >
+                  Confirm Rejection &amp; Notify Sub-DB
+                </button>
+                <button
+                  onClick={() => setRejectionModalInv(null)}
+                  style={{ flex: 1, padding: '.75rem', background: 'rgba(255,255,255,0.08)', border: '1px solid #666', borderRadius: '8px', color: '#fff', fontWeight: 700, fontSize: '.85rem', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    );
+  }
+
   const exportGrievancesCSV = () => {
     const headers = ['Ticket ID', 'Retailer Shop Name', 'Retailer Phone', 'Category', 'Subject / Issue', 'Description', 'Invoice Ref', 'Assigned Wholesaler (Sub-DB)', 'Priority', 'Status', 'Logged Date'];
     const rows = (supportTickets || []).map(t => [
@@ -45,7 +343,12 @@ export const ExecutiveDashboard = () => {
   };
 
   // ─── FILTER STATES ────────────────────────────────────────────────────────
+  const [currentView, setCurrentView] = useState('main'); // 'main' | 'invoices_page'
+  const [invoicesPageTab, setInvoicesPageTab] = useState('pending'); // 'pending' | 'verified' | 'rejected'
+  const [allInvoices, setAllInvoices] = useState([]);
   const [pendingInvoices, setPendingInvoices] = useState([]);
+  const [rejectionModalInv, setRejectionModalInv] = useState(null);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState('Illegible OCR Scan');
   const [selectedPendingInv, setSelectedPendingInv] = useState(null);
   const [expandedSubDBs, setExpandedSubDBs] = useState({});
 
@@ -57,13 +360,15 @@ export const ExecutiveDashboard = () => {
     try {
       const raw = localStorage.getItem('subdb_invoices');
       let list = raw ? JSON.parse(raw) : [];
-      let pendingList = list.filter(i => i.status === 'pending');
-      
-      if (pendingList.length === 0) {
-        // Fallback demo pending invoice for presentation purposes if none pending
-        pendingList = [];
+      if (list.length === 0) {
+        list = [
+          { id: 'inv-demo-1', invoice_number: 'INV-4891', wholesaler_name: 'Gupta Ferrero Rocher Wholesaler', retailer_name: 'Kumar Sweet House', purchase_date: '2026-08-20', total_amount: 18450, status: 'pending', products: [{ name: 'Ferrero Rocher 16pc', qty: 20, unit: 'Box', price: 650 }, { name: 'Raffaello 20pc', qty: 10, unit: 'Box', price: 545 }] },
+          { id: 'inv-demo-2', invoice_number: 'INV-4620', wholesaler_name: 'MP Premium Confectioners', retailer_name: 'Agrawal Mishthan Bhandar', purchase_date: '2026-08-19', total_amount: 14100, status: 'verified', products: [{ name: 'Ferrero Rocher 48pc', qty: 10, unit: 'Box', price: 1410 }] },
+          { id: 'inv-demo-3', invoice_number: 'INV-4211', wholesaler_name: 'Rajesh Sharma Wholesale', retailer_name: 'Patel Gift Store', purchase_date: '2026-08-18', total_amount: 9800, status: 'rejected', rejection_reason: 'Price Mismatch with Wholesale Rates', products: [{ name: 'Golden Gallery 18pc', qty: 8, unit: 'Box', price: 1225 }] }
+        ];
       }
-      setPendingInvoices(pendingList);
+      setAllInvoices(list);
+      setPendingInvoices(list.filter(i => i.status === 'pending'));
     } catch (e) {}
   };
 
@@ -683,30 +988,7 @@ export const ExecutiveDashboard = () => {
           </button>
 
           <button
-            onClick={() => {
-              const raw = localStorage.getItem('subdb_invoices');
-              let list = raw ? JSON.parse(raw) : [];
-              let pending = list.filter(i => i.status === 'pending');
-              if (pending.length > 0) {
-                setSelectedPendingInv(pending[0]);
-              } else if (list.length > 0) {
-                setSelectedPendingInv(list[0]);
-              } else {
-                setSelectedPendingInv({
-                  id: 'demo-pending-1',
-                  invoice_number: 'INV-4891',
-                  wholesaler_name: 'Gupta Ferrero Rocher Wholesaler',
-                  retailer_name: 'Kumar Sweet House',
-                  purchase_date: new Date().toISOString().split('T')[0],
-                  total_amount: 18450,
-                  status: 'pending',
-                  products: [
-                    { name: 'Ferrero Rocher 16pc', qty: 20, unit: 'Box', price: 650, total: 13000 },
-                    { name: 'Raffaello 20pc', qty: 10, unit: 'Box', price: 545, total: 5450 }
-                  ]
-                });
-              }
-            }}
+            onClick={() => setCurrentView('invoices_page')}
             style={{
               padding: '.65rem 1.15rem', background: 'linear-gradient(135deg, #10b981, #059669)',
               border: 'none', borderRadius: '10px', color: '#fff', fontWeight: 900, fontSize: '.82rem',
