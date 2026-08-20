@@ -63,7 +63,7 @@ const DUMMY_REWARDS = [
     available_inventory: 500
   },
 
-  // ─── TIER 2: RURAL SHOP UTILITIES & HOUSEHOLD APPLIANCES (10% TDS - 194R) ──
+  // ─── TIER 2: RURAL SHOP UTILITIES & HOUSEHOLD APPLIANCES (< ₹20,000 - NO 194R TDS) ──
   {
     id: '5',
     title: 'Havells 16-Inch High-Speed Counter Fan',
@@ -73,8 +73,8 @@ const DUMMY_REWARDS = [
     category: 'appliances',
     reward_type: 'product',
     partner_name: 'Havells India',
-    is_194r_applicable: true,
-    terms_conditions: 'Section 194R business perquisite: 10% TDS (₹250) logged with Form 16A credit.',
+    is_194r_applicable: false,
+    terms_conditions: 'Standard retailer incentive. Excluded from Section 194R TDS as value is below ₹20,000 threshold.',
     validity_days: 365,
     available_inventory: 120
   },
@@ -87,8 +87,8 @@ const DUMMY_REWARDS = [
     category: 'appliances',
     reward_type: 'product',
     partner_name: 'Bajaj Electricals',
-    is_194r_applicable: true,
-    terms_conditions: 'Business benefit under Section 194R: 10% TDS (₹380) recorded with tax invoice.',
+    is_194r_applicable: false,
+    terms_conditions: 'Standard retail equipment reward. Excluded from Section 194R TDS as value is below ₹20,000 threshold.',
     validity_days: 365,
     available_inventory: 80
   },
@@ -101,8 +101,8 @@ const DUMMY_REWARDS = [
     category: 'appliances',
     reward_type: 'voucher',
     partner_name: 'Luminous Power',
-    is_194r_applicable: true,
-    terms_conditions: 'Section 194R applicable: 10% TDS (₹450) deducted. Protects store inventory from spoilage.',
+    is_194r_applicable: false,
+    terms_conditions: 'Direct shop utility benefit. Excluded from Section 194R TDS as value is below ₹20,000 threshold.',
     validity_days: 365,
     available_inventory: 50
   },
@@ -115,13 +115,11 @@ const DUMMY_REWARDS = [
     category: 'gift_card',
     reward_type: 'partner',
     partner_name: 'Flipkart',
-    is_194r_applicable: true,
-    terms_conditions: 'Section 194R compliance: 10% TDS (₹200) logged. Requires verified PAN on file.',
+    is_194r_applicable: false,
+    terms_conditions: 'Instant voucher. Excluded from Section 194R TDS as value is below ₹20,000 threshold.',
     validity_days: 365,
     available_inventory: 200
   },
-
-  // ─── TIER 3: HIGH-VALUE RURAL ASSETS & ASPIRATIONAL REWARDS (194R HIGH VALUE)
   {
     id: '9',
     title: 'Tanishq 24K Gold Coin (₹10,000)',
@@ -131,11 +129,13 @@ const DUMMY_REWARDS = [
     category: 'luxury_gold',
     reward_type: 'voucher',
     partner_name: 'Tanishq Jewellers',
-    is_194r_applicable: true,
-    terms_conditions: 'Section 194R High-Value Gold Benefit: 10% TDS (₹1,000) deducted with compliance audit trail.',
+    is_194r_applicable: false,
+    terms_conditions: 'Festive retail loyalty gold asset. Excluded from Section 194R TDS as value is below ₹20,000 threshold.',
     validity_days: 365,
     available_inventory: 30
   },
+
+  // ─── TIER 3: HIGH-VALUE ASSETS (₹20,000+ - REGULATED UNDER SECTION 194R) ───
   {
     id: '10',
     title: 'Samsung 253L Smart Inverter Refrigerator',
