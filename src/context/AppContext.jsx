@@ -2844,6 +2844,8 @@ export const AppProvider = ({ children }) => {
     monthlyTargets,
     simulateTargetProgress,
     claimTargetPoints,
+    approvePendingInvoice,
+    rejectPendingInvoice,
     // Realtime Notifications & Popups
     markNotificationAsRead,
     markAllNotificationsAsRead,

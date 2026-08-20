@@ -1203,6 +1203,70 @@ export const ExecutiveDashboard = () => {
           </button>
         </div>
 
+                {/* ─── TABLE: PENDING INVOICE APPROVALS QUEUE ─── */}
+        {activeTableView === 'pending_invoices' && (
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: '#10b981', margin: 0 }}>📥 Pending Sub-DB Invoice Verification Queue</h3>
+                <p style={{ fontSize: '.75rem', color: '#999', margin: '2px 0 0 0' }}>Review and approve submitted invoices to credit retailer stock, advance target quotas, and trigger point rewards.</p>
+              </div>
+            </div>
+
+            {(pendingInvoices.length === 0) ? (
+              <div style={{ padding: '2.5rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '14px', border: '1px border-dashed rgba(212,165,116,0.3)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '3rem', color: '#10b981', display: 'block', marginBottom: '.5rem' }}>task_alt</span>
+                <p style={{ fontSize: '1rem', fontWeight: 800, color: '#fff', margin: '0 0 .25rem 0' }}>No Invoices Pending Verification</p>
+                <p style={{ fontSize: '.75rem', color: '#888', margin: 0 }}>All submitted Sub-DB invoices have been audited and approved.</p>
+              </div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '.84rem' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(16,185,129,.1)', borderBottom: '2px solid #10b981', color: '#10b981', textTransform: 'uppercase', fontSize: '.72rem', letterSpacing: '.05em' }}>
+                    <th style={{ padding: '.9rem 1rem' }}>Invoice Ref</th>
+                    <th style={{ padding: '.9rem 1rem' }}>Retailer Shop</th>
+                    <th style={{ padding: '.9rem 1rem' }}>Sub-DB Wholesaler</th>
+                    <th style={{ padding: '.9rem 1rem' }}>Scanned Products</th>
+                    <th style={{ padding: '.9rem 1rem', textAlign: 'right' }}>Total Amount</th>
+                    <th style={{ padding: '.9rem 1rem', textAlign: 'center' }}>Scan Confidence</th>
+                    <th style={{ padding: '.9rem 1rem', textAlign: 'center' }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingInvoices.map((inv, idx) => (
+                    <tr key={inv.id || idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <td style={{ padding: '.9rem 1rem', fontWeight: 900, color: '#fff' }}>#{inv.invoice_number}</td>
+                      <td style={{ padding: '.9rem 1rem', fontWeight: 800, color: '#d4a574' }}>🏪 {inv.retailer_name}</td>
+                      <td style={{ padding: '.9rem 1rem', color: '#ccc' }}>🏢 {inv.wholesaler_name}</td>
+                      <td style={{ padding: '.9rem 1rem', color: '#aaa', fontSize: '.78rem' }}>
+                        {(inv.products || inv.items_json || []).map(p => `${p.name} (${p.qty})`).join(', ') || 'Ferrero Products'}
+                      </td>
+                      <td style={{ padding: '.9rem 1rem', textAlign: 'right', fontWeight: 900, color: '#10b981' }}>₹{Number(inv.total_amount || 0).toLocaleString('en-IN')}</td>
+                      <td style={{ padding: '.9rem 1rem', textAlign: 'center' }}>
+                        <span style={{ fontSize: '.68rem', fontWeight: 800, padding: '.2rem .5rem', borderRadius: '4px', background: 'rgba(16,185,129,0.2)', color: '#10b981' }}>
+                          High (98%)
+                        </span>
+                      </td>
+                      <td style={{ padding: '.9rem 1rem', textAlign: 'center' }}>
+                        <button
+                          onClick={() => setSelectedPendingInv(inv)}
+                          style={{
+                            padding: '.4rem .9rem', background: 'linear-gradient(135deg, #10b981, #059669)',
+                            border: 'none', borderRadius: '6px', color: '#fff', fontWeight: 900, fontSize: '.75rem', cursor: 'pointer'
+                          }}
+                        >
+                          Verify &amp; Approve →
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+
         {/* ─── TABLE 1: BY RETAILER OUTLET ACCOUNTS ─── */}
         {activeTableView === 'retailers' && (
           <div style={{ overflowX: 'auto' }}>
