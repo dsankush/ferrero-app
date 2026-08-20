@@ -342,6 +342,25 @@ export const SubDBDashboard = () => {
           onClose={() => setSelectedInvoice(null)}
         />
       )}
+
+      {/* Floating Toaster Alert for Sub-DB Actions & Rejections */}
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)',
+          background: toast.type === 'error' ? 'rgba(196,30,58,0.95)' : 'rgba(20,20,20,0.95)',
+          color: '#fff', padding: '.75rem 1.25rem', borderRadius: '9999px',
+          border: toast.type === 'error' ? '1px solid #ef4444' : '1px solid rgba(212,165,116,0.5)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+          zIndex: 99999, display: 'flex', alignItems: 'center', gap: '.5rem',
+          fontSize: '.82rem', fontWeight: 800, animation: 'slideUp .2s ease-out',
+          maxWidth: '90vw', textAlign: 'center'
+        }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>
+            {toast.type === 'error' ? 'error' : 'check_circle'}
+          </span>
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 };

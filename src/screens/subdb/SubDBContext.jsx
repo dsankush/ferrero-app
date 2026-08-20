@@ -538,9 +538,9 @@ export const SubDBProvider = ({ children }) => {
         const raw = localStorage.getItem('counterOS_popup_for_subdb');
         if (raw) {
           const data = JSON.parse(raw);
-          if (data.savedAt && data.savedAt !== window.__lastSubDBNotifTs) {
+          if (data.savedAt && data.savedAt !== window.__lastSubDBNotifTs && (Date.now() - data.savedAt < 60000)) {
             window.__lastSubDBNotifTs = data.savedAt;
-            showToast(`${data.title}: ${data.body}`, 'info');
+            showToast(`⚠️ ${data.title}: ${data.body}`, 'error');
           }
         }
       } catch (e) {}

@@ -653,13 +653,12 @@ export const AppProvider = ({ children }) => {
   // Sync tab updates in local testing mode & cross-role events
   useEffect(() => {
     const handleStorage = (e) => {
-      if (e.key === `counterOS_popup_for_${user?.role}` && e.newValue) {
+      if (e.key === 'counterOS_popup_for_retailer' && e.newValue && user?.role === 'retailer') {
         try {
           const data = JSON.parse(e.newValue);
-          if (Date.now() - data.savedAt < 10 * 60 * 1000) {
-            setGlobalPopup(data);
+          if (Date.now() - (data.savedAt || 0) < 60000) {
+            showToast(`🎉 ${data.title}: ${data.body}`, 'success');
           }
-          // removed to prevent storage event cascade
         } catch(e) {}
       }
       if (e.key === 'counterOS_inventory' && e.newValue) {
@@ -2743,6 +2742,15 @@ export const AppProvider = ({ children }) => {
         saveToStorage('counterOS_monthlyTargets', next);
         return next;
       });
+
+      // Broadcast instant cross-tab toaster to Retailer
+      try {
+        localStorage.setItem('counterOS_popup_for_retailer', JSON.stringify({
+          title: 'Restock Invoice Approved',
+          body: `Bill #${approvedInv.invoice_number} (₹${Number(approvedInv.total_amount || 0).toLocaleString('en-IN')}) verified & credited to stock!`,
+          savedAt: Date.now()
+        }));
+      } catch (e) {}
 
       // Notify local retailer tab cleanly ONCE
       setNotificationsState(prev => {
