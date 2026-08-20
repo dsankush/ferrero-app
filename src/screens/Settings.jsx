@@ -44,7 +44,7 @@ export const Settings = () => {
                             </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.82rem', padding: '.4rem 0', borderBottom: '1px solid var(--bdr2)' }}>
-                            <span style={{ color: 'var(--t2)' }}>PAN Number</span>
+                            <span style={{ color: 'var(--t2)' }}>KYC Reference</span>
                             <strong style={{ color: user.pan_number ? 'var(--g4)' : 'var(--t3)', letterSpacing: '.05em' }}>
                                 {user.pan_number || 'Saved upon 1st reward claim'}
                             </strong>

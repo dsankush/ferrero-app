@@ -533,7 +533,7 @@ export const ExecutiveDashboard = () => {
       'July Restock Boxes', 'July Spend (INR)', 'July Target %',
       'August Restock Boxes', 'August Spend (INR)', 'August Target %',
       '3-Month Total Boxes', '3-Month Total Spend (INR)', '3-Month Total Points', 'Avg Quota %',
-      'PAN Number', '194R KYC Status'
+      '194R KYC Status'
     ];
 
     const rows = dataToExport.map(rt => {
@@ -1232,11 +1232,11 @@ export const ExecutiveDashboard = () => {
           {/* Search Query */}
           <div>
             <label style={{ fontSize: '.68rem', fontWeight: 800, color: 'var(--g4)', textTransform: 'uppercase', display: 'block', marginBottom: '.3rem' }}>
-              🔍 Search Any Record / Outlet / PAN
+              🔍 Search Any Record / Outlet
             </label>
             <input
               type="text"
-              placeholder="Search Retailer, Sub-DB, City, PAN..."
+              placeholder="Search Retailer, Sub-DB, City..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               style={{ width: '100%', background: '#241711', border: '1px solid rgba(212,165,116,.3)', borderRadius: '8px', padding: '.55rem .75rem', color: '#fff', fontSize: '.82rem', outline: 'none' }}
@@ -1568,7 +1568,7 @@ export const ExecutiveDashboard = () => {
                   <th style={{ padding: '.9rem 1rem', textAlign: 'center' }}>Boxes Credited</th>
                   <th style={{ padding: '.9rem 1rem', textAlign: 'right' }}>Wholesale Spend</th>
                   <th style={{ padding: '.9rem 1rem', textAlign: 'center' }}>Points Earned</th>
-                  <th style={{ padding: '.9rem 1rem' }}>PAN &amp; KYC Status</th>
+                  <th style={{ padding: '.9rem 1rem' }}>KYC Status</th>
                   <th style={{ padding: '.9rem 1rem', textAlign: 'center' }}>Action</th>
                 </tr>
               </thead>
@@ -1588,7 +1588,7 @@ export const ExecutiveDashboard = () => {
                     <td style={{ padding: '.9rem 1rem', textAlign: 'center', fontWeight: 900, color: '#ffd060' }}>+{ret.points} pts</td>
                     <td style={{ padding: '.9rem 1rem' }}>
                       <span style={{ fontSize: '.68rem', fontWeight: 800, background: 'rgba(16,185,129,.15)', border: '1px solid #10b981', color: '#10b981', padding: '.2rem .55rem', borderRadius: '9999px' }}>
-                        ✓ {ret.pan}
+                        ✓ {ret.kyc || 'Verified'}
                       </span>
                     </td>
                     <td style={{ padding: '.9rem 1rem', textAlign: 'center' }}>

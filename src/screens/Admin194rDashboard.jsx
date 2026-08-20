@@ -275,21 +275,21 @@ export const Admin194rDashboard = () => {
                   </thead>
                   <tbody>
                     <tr style={{ borderBottom: '1px solid var(--bdr2)' }}>
-                      <td style={{ padding: '.6rem' }}>Ramesh Kumar<br/><span style={{fontSize:'.6rem', color:'var(--t3)'}}>PAN: AGKPK1234E</span></td>
+                      <td style={{ padding: '.6rem' }}>Ramesh Kumar</td>
                       <td style={{ padding: '.6rem' }}>OnePlus Smartphone</td>
                       <td style={{ padding: '.6rem' }}>20,000</td>
                       <td style={{ padding: '.6rem' }}>₹20,000</td>
                       <td style={{ padding: '.6rem', color: 'var(--g4)' }}>Pending</td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid var(--bdr2)' }}>
-                      <td style={{ padding: '.6rem' }}>Mohan Sharma<br/><span style={{fontSize:'.6rem', color:'var(--t3)'}}>PAN: DLKPO8372S</span></td>
+                      <td style={{ padding: '.6rem' }}>Mohan Sharma</td>
                       <td style={{ padding: '.6rem' }}>Tanishq Gold Coin</td>
                       <td style={{ padding: '.6rem' }}>40,000</td>
                       <td style={{ padding: '.6rem' }}>₹35,000</td>
                       <td style={{ padding: '.6rem', color: '#78f275' }}>Released</td>
                     </tr>
                     <tr style={{ borderBottom: '1px solid var(--bdr2)' }}>
-                      <td style={{ padding: '.6rem' }}>Sunita Patel<br/><span style={{fontSize:'.6rem', color:'var(--t3)'}}>PAN: PLKPO8392J</span></td>
+                      <td style={{ padding: '.6rem' }}>Sunita Patel</td>
                       <td style={{ padding: '.6rem' }}>HP Laptop &amp; Printer</td>
                       <td style={{ padding: '.6rem' }}>50,000</td>
                       <td style={{ padding: '.6rem' }}>₹45,000</td>
@@ -520,7 +520,7 @@ export const Admin194rDashboard = () => {
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem', fontSize: '.75rem', color: 'var(--t2)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Permanent Account Number (PAN):</span>
+                  <span>Govt Verification Status:</span>
                   <strong style={{ color: 'var(--g4)' }}>AGKPK1234E (Auto-Verified)</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
