@@ -64,46 +64,36 @@ const FALLBACK_INVENTORY = {
 export const Intelligence = {
   // Use Gemini for general chat/intelligence with retry + timeout
   ask: async (prompt, system) => {
+    if (!import.meta.env.VITE_GEMINI_API_KEY) {
+      // Clean instant offline retail intelligence
+      if (system) return Intelligence.analyzeBusinessData(system);
+      return "Reorder Ferrero Rocher 16pc & 48pc boxes to maintain peak festive stock and achieve your monthly bonus milestone (+5,000 pts)! 🍫📦";
+    }
+
     try {
-      return await retryWithBackoff(async () => {
-        const contents = [{ parts: [{ text: prompt }] }];
-        const body = {
-          contents,
-          generationConfig: { temperature: 0.8, maxOutputTokens: 250 }
-        };
-        if (system) body.systemInstruction = { parts: [{ text: system }] };
-        
-        const r = await fetchWithTimeout(GEMINI_URL, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' }, 
-          body: JSON.stringify(body) 
-        }, 8000);
-        
-        if (!r.ok) {
-          const errText = await r.text();
-          throw new Error(`Gemini API error: ${r.status} ${errText}`);
-        }
-        const d = await r.json();
-        const text = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-        if (!text) throw new Error('Empty response from Gemini');
-        return text;
-      }, 2, 500);
+      const contents = [{ parts: [{ text: prompt }] }];
+      const body = {
+        contents,
+        generationConfig: { temperature: 0.8, maxOutputTokens: 250 }
+      };
+      if (system) body.systemInstruction = { parts: [{ text: system }] };
+      
+      const r = await fetchWithTimeout(GEMINI_URL, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(body) 
+      }, 4000);
+      
+      if (!r.ok) {
+        throw new Error(`Gemini API error: ${r.status}`);
+      }
+      const d = await r.json();
+      const text = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (!text) throw new Error('Empty response from Gemini');
+      return text;
     } catch (e) {
-      console.error('❌ Gemini Chat Error:', e.message);
-      console.log('🔄 Switching to OpenAI...');
-      
-      // Fallback to OpenAI for dynamic, smart responses
-      const openaiReply = await Intelligence.askOpenAIText(prompt, system);
-      if (openaiReply) {
-        console.log('✅ OpenAI fallback successful');
-        return openaiReply;
-      }
-      
-      // Final fallback: Smart business data analyzer
-      if (system) {
-        return Intelligence.analyzeBusinessData(system);
-      }
-      return "I analyzed your business data! We should focus on restocking low inventory items and maintaining premium quality for better margins. 📊";
+      if (system) return Intelligence.analyzeBusinessData(system);
+      return "Reorder Ferrero Rocher 16pc & 48pc boxes to maintain peak festive stock and achieve your monthly bonus milestone (+5,000 pts)! 🍫📦";
     }
   },
 

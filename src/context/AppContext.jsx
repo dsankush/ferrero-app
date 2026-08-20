@@ -1025,7 +1025,7 @@ export const AppProvider = ({ children }) => {
         try {
           const { data: dbRedemptions, error: redErr } = await supabase
             .from('reward_redemptions')
-            .select('*, rewards_catalog(*)')
+            .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
           if (redErr) throw redErr;
@@ -1073,7 +1073,7 @@ export const AppProvider = ({ children }) => {
           try {
             const { data: compRed, error: compErr } = await supabase
               .from('reward_redemptions')
-              .select('*, rewards_catalog(*), profiles(*)')
+              .select('*')
               .neq('compliance_status', 'Approved')
               .order('created_at', { ascending: false });
             if (compErr) throw compErr;
@@ -1216,7 +1216,7 @@ export const AppProvider = ({ children }) => {
         // Reload my redemptions
         const { data: dbRedemptions } = await supabase
           .from('reward_redemptions')
-          .select('*, rewards_catalog(*)')
+          .select('*')
           .eq('user_id', currentUser.id)
           .order('created_at', { ascending: false });
         
@@ -1243,7 +1243,7 @@ export const AppProvider = ({ children }) => {
         if (currentUser.role === 'distributor' || currentUser.role === 'admin') {
           const { data: compRed } = await supabase
             .from('reward_redemptions')
-            .select('*, rewards_catalog(*), profiles(*)')
+            .select('*')
             .neq('compliance_status', 'Approved')
             .order('created_at', { ascending: false });
           if (compRed) {
@@ -2211,7 +2211,7 @@ export const AppProvider = ({ children }) => {
       try {
         const { data: redemption, error: getErr } = await supabase
           .from('reward_redemptions')
-          .select('*, rewards_catalog(*)')
+          .select('*')
           .eq('id', redemptionId)
           .single();
         if (getErr) throw getErr;
