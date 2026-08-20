@@ -540,7 +540,7 @@ export const SubDBProvider = ({ children }) => {
           const data = JSON.parse(raw);
           if (data.savedAt && data.savedAt !== window.__lastSubDBNotifTs) {
             window.__lastSubDBNotifTs = data.savedAt;
-            showToast(`🔔 ${data.title}: ${data.body}`, 'info');
+            showToast(`${data.title}: ${data.body}`, 'info');
           }
         }
       } catch (e) {}

@@ -1298,10 +1298,13 @@ export const AppProvider = ({ children }) => {
           }, ...prev];
         });
 
-        const msg = notif.type === 'campaign' 
-          ? `🎉 New Ferrero Offer: ${notif.title}!` 
-          : `🔔 ${notif.title}`;
-        showToast(msg);
+        if (notif.type !== 'toast') {
+          const msg = notif.type === 'campaign' 
+            ? `🎉 New Ferrero Offer: ${notif.title}!` 
+            : `${notif.title}`;
+          const event = new CustomEvent('show-toast', { detail: { message: msg } });
+          window.dispatchEvent(event);
+        }
       })
       .subscribe();
 
@@ -1801,19 +1804,9 @@ export const AppProvider = ({ children }) => {
 
   // ─── TOAST NOTIFICATIONS ────────────────────────────────────────────────
   const showToast = (message, type = 'info') => {
-    // Dispatch global toast event to trigger UI
-    const event = new CustomEvent('show-toast', { detail: { message } });
+    if (!message) return;
+    const event = new CustomEvent('show-toast', { detail: { message, type } });
     window.dispatchEvent(event);
-
-    // Also add to notifications for history
-    addNotification({
-      id: Date.now(),
-      title: message,
-      body: '',
-      type: 'toast',
-      isRead: false,
-      timestamp: new Date().toLocaleString()
-    });
   };
 
   // ─── LOAD ACTIVE CAMPAIGNS (with real-time) ─────────────────────────────
