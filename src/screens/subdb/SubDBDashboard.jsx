@@ -166,10 +166,12 @@ export const SubDBDashboard = () => {
   const [showAddRetailerModal, setShowAddRetailerModal] = useState(false);
   const [newRetailer, setNewRetailer] = useState({ shop_name: '', name: '', phone: '', location: '', zone: 'Central' });
 
+  const invList = Array.isArray(invoices) ? invoices : [];
+  const retList = Array.isArray(retailers) ? retailers : [];
   const thisMonth = new Date().toISOString().slice(0, 7);
-  const monthInvoices = invoices.filter(i => (i.created_at || '').startsWith(thisMonth));
+  const monthInvoices = invList.filter(i => (i.created_at || i.purchase_date || '').startsWith(thisMonth));
   const monthAmount = monthInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0);
-  const totalAmount = invoices.reduce((s, i) => s + Number(i.total_amount || 0), 0);
+  const totalAmount = invList.reduce((s, i) => s + Number(i.total_amount || 0), 0);
 
   // Monthly target metrics
   const targetMonthlyAmount = 75000;
@@ -211,7 +213,7 @@ export const SubDBDashboard = () => {
 
           {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '.75rem', marginBottom: '1.25rem' }}>
-            <StatCard icon="receipt" label="Total Bills" value={invoices.length} color="#d4a574" />
+            <StatCard icon="receipt" label="Total Bills" value={invList.length} color="#d4a574" />
             <StatCard icon="calendar_today" label="This Month" value={monthInvoices.length} color="#c41e3a" />
             <StatCard icon="currency_rupee" label="Total ₹" value={`₹${(totalAmount / 1000).toFixed(1)}k`} color="#10b981" />
           </div>
@@ -297,11 +299,11 @@ export const SubDBDashboard = () => {
                 Invoice History
               </p>
               <span style={{ fontSize: '.72rem', color: 'var(--g4)', fontWeight: 700 }}>
-                {invoices.length} total
+                {invList.length} total
               </span>
             </div>
 
-            {invoices.length === 0 ? (
+            {invList.length === 0 ? (
               <div style={{
                 background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r12)',
                 padding: '2rem', textAlign: 'center'
@@ -314,7 +316,7 @@ export const SubDBDashboard = () => {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
-                {invoices.map(inv => (
+                {invList.map(inv => (
                   <InvoiceRow 
                     key={inv.id} 
                     inv={inv} 
