@@ -646,7 +646,7 @@ export const AppProvider = ({ children }) => {
           setTimeout(() => setGlobalPopup(data), 600);
         }
       } catch(e) {}
-      localStorage.removeItem(`counterOS_popup_for_${role}`);
+      // removed to prevent storage event cascade
     }
   }, [user?.role]);
 
@@ -659,7 +659,7 @@ export const AppProvider = ({ children }) => {
           if (Date.now() - data.savedAt < 10 * 60 * 1000) {
             setGlobalPopup(data);
           }
-          localStorage.removeItem(`counterOS_popup_for_${user?.role}`);
+          // removed to prevent storage event cascade
         } catch(e) {}
       }
       if (e.key === 'counterOS_inventory' && e.newValue) {
@@ -2771,11 +2771,11 @@ export const AppProvider = ({ children }) => {
       }
 
       // 2. Advance Monthly Restock Target & Auto-Credit Bonus Points if completed
-      setMonthlyTargets(prev => {
-        const totalBoxes = products.reduce((sum, p) => sum + Number(p.qty || 0), 0) || 10;
-        let milestoneReached = false;
-        let bonusPts = 5000;
+      const totalBoxes = products.reduce((sum, p) => sum + Number(p.qty || 0), 0) || 10;
+      let milestoneReached = false;
+      let bonusPts = 5000;
 
+      setMonthlyTargets(prev => {
         const next = prev.map(t => {
           const tgtVal = Number(t.target_value ?? t.target_boxes ?? 1) || 1;
           const curVal = Number(t.current_value ?? t.restocked_boxes ?? 0) || 0;
@@ -2792,14 +2792,14 @@ export const AppProvider = ({ children }) => {
             status: isDone ? 'completed' : 'in_progress'
           };
         });
-
-        if (milestoneReached) {
-          addPointCredits(bonusPts, `🎯 Target Milestone Completed: Auto-credited +${bonusPts} bonus points!`);
-          showToast(`🎉 Target Milestone Completed! Auto-credited +${bonusPts} points to Retailer!`, 'success');
-        }
         saveToStorage('counterOS_monthlyTargets', next);
         return next;
       });
+
+      if (milestoneReached) {
+        addPointCredits(bonusPts, `🎯 Target Milestone Completed: Auto-credited +${bonusPts} bonus points!`);
+        showToast(`🎉 Target Milestone Completed! Auto-credited +${bonusPts} points to Retailer!`, 'success');
+      }
 
       // 3. Send Realtime Notification to Retailer
       addNotification({

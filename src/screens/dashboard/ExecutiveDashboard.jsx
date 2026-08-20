@@ -76,8 +76,13 @@ export const ExecutiveDashboard = () => {
 
   useEffect(() => {
     loadPendingInvoices();
-    const interval = setInterval(loadPendingInvoices, 3000);
-    return () => clearInterval(interval);
+    const handleStorage = (e) => {
+      if (!e || e.key === 'subdb_invoices') {
+        loadPendingInvoices();
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
 
   const [selectedZone, setSelectedZone] = useState('all');

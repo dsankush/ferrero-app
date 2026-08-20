@@ -538,9 +538,9 @@ export const SubDBProvider = ({ children }) => {
         const raw = localStorage.getItem('counterOS_popup_for_subdb');
         if (raw) {
           const data = JSON.parse(raw);
-          if (Date.now() - (data.savedAt || 0) < 120000) {
+          if (data.savedAt && data.savedAt !== window.__lastSubDBNotifTs) {
+            window.__lastSubDBNotifTs = data.savedAt;
             showToast(`🔔 ${data.title}: ${data.body}`, 'info');
-            localStorage.removeItem('counterOS_popup_for_subdb');
           }
         }
       } catch (e) {}
@@ -554,10 +554,8 @@ export const SubDBProvider = ({ children }) => {
       }
     };
     window.addEventListener('storage', handleStorage);
-    const interval = setInterval(checkSubDBNotifications, 4000);
     return () => {
       window.removeEventListener('storage', handleStorage);
-      clearInterval(interval);
     };
   }, [subUser?.id]);
 
