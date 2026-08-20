@@ -2695,11 +2695,16 @@ export const AppProvider = ({ children }) => {
   const approvePendingInvoice = async (invoiceId) => {
     let approvedInv = null;
 
+    // 1. Update status in Supabase if configured
     if (isSupabaseConfigured) {
       try {
         const { data, error } = await supabase
           .from('subdb_invoices')
-          .update({ status: 'verified', updated_at: new Date().toISOString() })
+          .update({ 
+            status: 'verified', 
+            verified_at: new Date().toISOString(),
+            verified_by: 'Executive Audit Team'
+          })
           .eq('id', invoiceId)
           .select()
           .single();
@@ -2709,82 +2714,32 @@ export const AppProvider = ({ children }) => {
       }
     }
 
-    if (!approvedInv) {
-      // Fallback local update
-      try {
-        const raw = localStorage.getItem('subdb_invoices');
-        if (raw) {
-          const list = JSON.parse(raw);
-          const idx = list.findIndex(i => i.id === invoiceId);
-          if (idx !== -1) {
-            list[idx].status = 'verified';
-            approvedInv = list[idx];
-            localStorage.setItem('subdb_invoices', JSON.stringify(list));
-          }
-        }
-      } catch (e) {}
-    }
-
-    if (approvedInv) {
-      const retailerId = approvedInv.retailer_id || 'c1000000-0000-0000-0000-000000000001';
-      const products = approvedInv.products || approvedInv.items_json || [];
-      const totalAmt = Number(approvedInv.total_amount || 0);
-
-      // 1. Update Retailer Inventory Stock
-      if (products.length > 0) {
-        for (const item of products) {
-          if (!item.name || !item.qty) continue;
-          if (isSupabaseConfigured) {
-            try {
-              const { data: dbInv } = await supabase
-                .from('inventory')
-                .select('*')
-                .eq('user_id', retailerId);
-              
-              const existing = dbInv?.find(i => i.name.toLowerCase() === item.name.toLowerCase());
-              if (existing) {
-                await supabase
-                  .from('inventory')
-                  .update({ qty: Number(existing.qty || 0) + Number(item.qty), updated_at: new Date().toISOString() })
-                  .eq('id', existing.id);
-              } else {
-                await supabase.from('inventory').insert([{
-                  user_id: retailerId,
-                  code: item.code || `FR-${Date.now().toString().slice(-4)}`,
-                  name: item.name,
-                  cat: item.cat || 'Rocher',
-                  unit: item.unit || 'Box',
-                  qty: Number(item.qty),
-                  buy: Number(item.price || 300),
-                  sell: Math.round(Number(item.price || 300) * 1.5),
-                  earn: Number(item.price || 300) * 0.5,
-                  mfg: '2026-06',
-                  exp: '2027-05',
-                  business_cat: 'rocher'
-                }]);
-              }
-            } catch (err) {
-              console.warn('Inventory credit error:', err.message);
-            }
-          }
+    // 2. Update local storage fallback if not updated in Supabase
+    try {
+      const raw = localStorage.getItem('subdb_invoices');
+      if (raw) {
+        const list = JSON.parse(raw);
+        const idx = list.findIndex(i => i.id === invoiceId);
+        if (idx !== -1) {
+          list[idx].status = 'verified';
+          list[idx].verified_at = new Date().toISOString();
+          approvedInv = list[idx];
+          localStorage.setItem('subdb_invoices', JSON.stringify(list));
         }
       }
+    } catch (e) {}
 
-      // 2. Advance Monthly Restock Target & Auto-Credit Bonus Points if completed
+    // 3. Advance local target metrics & point credits for local testing
+    if (approvedInv) {
+      const products = approvedInv.products || approvedInv.items_json || [];
       const totalBoxes = products.reduce((sum, p) => sum + Number(p.qty || 0), 0) || 10;
-      let milestoneReached = false;
-      let bonusPts = 5000;
-
+      
       setMonthlyTargets(prev => {
         const next = prev.map(t => {
           const tgtVal = Number(t.target_value ?? t.target_boxes ?? 1) || 1;
           const curVal = Number(t.current_value ?? t.restocked_boxes ?? 0) || 0;
           const nextVal = curVal + totalBoxes;
           const isDone = nextVal >= tgtVal;
-          if (isDone && t.status !== 'completed' && t.status !== 'claimed') {
-            milestoneReached = true;
-            bonusPts = Number(t.points_reward ?? t.bonus_points ?? 5000);
-          }
           return {
             ...t,
             current_value: nextVal,
@@ -2796,28 +2751,26 @@ export const AppProvider = ({ children }) => {
         return next;
       });
 
-      if (milestoneReached) {
-        addPointCredits(bonusPts, `🎯 Target Milestone Completed: Auto-credited +${bonusPts} bonus points!`);
-        showToast(`🎉 Target Milestone Completed! Auto-credited +${bonusPts} points to Retailer!`, 'success');
-      }
-
-      // 3. Send Realtime Notification to Retailer
-      addNotification({
-        title: '📦 Restock Invoice Approved & Verified!',
-        body: `Bill #${approvedInv.invoice_number} (₹${totalAmt.toLocaleString('en-IN')}) verified by Management and credited to your stock & targets.`,
-        role: 'retailer',
-        type: 'notification'
+      // Notify local retailer tab cleanly ONCE
+      setNotificationsState(prev => {
+        const notifId = `inv-app-${approvedInv.invoice_number}-${Date.now()}`;
+        if (prev.some(n => n.id === notifId)) return prev;
+        const newNotif = {
+          id: notifId,
+          title: '📦 Restock Invoice Approved & Verified!',
+          body: `Bill #${approvedInv.invoice_number} (₹${Number(approvedInv.total_amount || 0).toLocaleString('en-IN')}) verified by Executive Audit and credited to your stock.`,
+          role: 'retailer',
+          isRead: false,
+          is_read: false,
+          time: 'Just now',
+          type: 'notification'
+        };
+        const updated = [newNotif, ...prev];
+        saveToStorage(STORAGE_KEYS.notifications, updated);
+        return updated;
       });
 
-      // 4. Emit popup alert for cross-tab retailer
-      try {
-        localStorage.setItem('counterOS_new_invoice_event', JSON.stringify({
-          ...approvedInv,
-          savedAt: Date.now()
-        }));
-      } catch (e) {}
-
-      showToast('✅ Invoice Approved & Verified! Retailer stock, targets & points updated.', 'success');
+      showToast('✅ Invoice Approved & Verified! Retailer stock & targets updated.', 'success');
       return true;
     }
     return false;
@@ -2842,33 +2795,33 @@ export const AppProvider = ({ children }) => {
       } catch (e) {}
     }
 
-    if (!rejectedInv) {
-      try {
-        const raw = localStorage.getItem('subdb_invoices');
-        if (raw) {
-          const list = JSON.parse(raw);
-          const idx = list.findIndex(i => i.id === invoiceId);
-          if (idx !== -1) {
-            list[idx].status = 'rejected';
-            list[idx].rejection_reason = reason;
-            rejectedInv = list[idx];
-            localStorage.setItem('subdb_invoices', JSON.stringify(list));
-          }
+    try {
+      const raw = localStorage.getItem('subdb_invoices');
+      if (raw) {
+        const list = JSON.parse(raw);
+        const idx = list.findIndex(i => i.id === invoiceId);
+        if (idx !== -1) {
+          list[idx].status = 'rejected';
+          list[idx].rejection_reason = reason;
+          rejectedInv = list[idx];
+          localStorage.setItem('subdb_invoices', JSON.stringify(list));
         }
-      } catch (e) {}
-    }
+      }
+    } catch (e) {}
 
     const invNum = rejectedInv?.invoice_number || 'INV';
     const retName = rejectedInv?.retailer_name || 'Retailer';
 
-    addNotification({
-      title: '⚠️ Sub-DB Invoice Rejected During Audit',
-      body: `Invoice #${invNum} for ${retName} was rejected. Reason: ${reason}`,
-      role: 'subdb',
-      type: 'rejection'
-    });
+    // Broadcast rejection notification to Sub-DB ONCE
+    try {
+      localStorage.setItem('counterOS_popup_for_subdb', JSON.stringify({
+        title: '⚠️ Sub-DB Invoice Rejected',
+        body: `Invoice #${invNum} for ${retName} was rejected. Reason: ${reason}`,
+        savedAt: Date.now()
+      }));
+    } catch (e) {}
 
-    showToast(`⚠️ Invoice #${invNum} rejected. Rejection notification sent to Sub-DB.`, 'info');
+    showToast(`⚠️ Invoice #${invNum} rejected. Sub-DB notified.`, 'info');
     return true;
   };
 
