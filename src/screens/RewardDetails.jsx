@@ -62,9 +62,7 @@ export const RewardDetails = () => {
     );
   }
 
-  const is194r = reward.is_194r_applicable === true || 
-                 String(reward.is_194r_applicable).toLowerCase() === 'yes' ||
-                 (Number(reward.reward_value) >= 20000);
+  const is194r = Number(reward.reward_value || 0) >= 20000;
 
   const tdsPercent = is194r ? Number(reward.tds_percentage || 10) : 0;
   const tdsAmt = is194r ? Number(reward.tds_amount || (reward.reward_value * tdsPercent / 100)) : 0;

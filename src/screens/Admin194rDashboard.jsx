@@ -69,7 +69,7 @@ export const Admin194rDashboard = () => {
 
   // Calculate Metrics
   // Since we might be offline, we aggregate from complianceRedemptions or myRedemptions
-  const sourceList = isSupabaseConfigured ? complianceRedemptions : myRedemptions.filter(r => r.reward?.is_194r_applicable);
+  const sourceList = (isSupabaseConfigured ? complianceRedemptions : myRedemptions).filter(r => Number(r.reward?.reward_value || r.cashbackAmount || 0) >= 20000);
   
   const totalIssued = sourceList.length + 12; // Seeding metrics + 12 for dashboard realism
   const applicableCount = sourceList.length + 8;

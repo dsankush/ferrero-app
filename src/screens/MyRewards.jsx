@@ -59,12 +59,11 @@ export const MyRewards = () => {
   const [selectedTrackerId, setSelectedTrackerId] = useState(null);
 
   // Helper to check if item is 194R-applicable
-  const checkIs194r = (claim) => {
-    const r = claim.reward;
-    if (!r) return false;
-    return r.is_194r_applicable === true || 
-           String(r.is_194r_applicable).toLowerCase() === 'yes' ||
-           (Number(r.reward_value) >= 20000);
+    const checkIs194r = (claim) => {
+    if (!claim) return false;
+    const r = claim.reward || {};
+    const val = Number(r.reward_value || claim.cashbackAmount || 0);
+    return val >= 20000;
   };
 
   // Helper to check if item is pending compliance review
