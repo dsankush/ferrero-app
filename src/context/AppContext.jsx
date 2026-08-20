@@ -497,6 +497,10 @@ export const AppProvider = ({ children }) => {
     };
 
     setNotifications(prev => {
+      if (prev.some(n => n.id === notifObj.id || (n.title === notifObj.title && n.body === notifObj.body && (Date.now() - (n.id_ts || 0) < 5000)))) {
+        return prev;
+      }
+      notifObj.id_ts = Date.now();
       const next = [notifObj, ...prev];
       saveToStorage(STORAGE_KEYS.notifications, next);
       return next;
@@ -512,7 +516,7 @@ export const AppProvider = ({ children }) => {
       };
       localStorage.setItem(`counterOS_popup_for_${targetRole}`, JSON.stringify(eventData));
       localStorage.setItem('counterOS_notification_signal', JSON.stringify({ ...eventData, time: Date.now() }));
-      window.dispatchEvent(new Event('storage'));
+      // window.dispatchEvent(new Event('storage')); -- removed to prevent infinite loops
     } catch (e) {}
 
     if (isSupabaseConfigured) {
@@ -1269,25 +1273,31 @@ export const AppProvider = ({ children }) => {
       })
       .subscribe();
 
+    const seenNotifIds = new Set();
     const notifChannel = supabase
       .channel('realtime-notif')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
-        console.log('🔔 New Notification:', payload);
         const notif = payload.new;
-        setNotificationsState(prev => [{
-          id: notif.id,
-          title: notif.title,
-          body: notif.body,
-          role: notif.role,
-          isRead: notif.is_read,
-          time: 'Just now',
-          type: notif.type,
-          offerType: notif.offer_type,
-          offer_data: notif.offer_data,
-          campaignId: notif.campaign_id
-        }, ...prev]);
+        if (!notif || !notif.id || seenNotifIds.has(notif.id)) return;
+        seenNotifIds.add(notif.id);
+        setTimeout(() => seenNotifIds.delete(notif.id), 10000);
 
-        // Trigger notification toast on retailer side
+        setNotificationsState(prev => {
+          if (prev.some(n => n.id === notif.id)) return prev;
+          return [{
+            id: notif.id,
+            title: notif.title,
+            body: notif.body,
+            role: notif.role,
+            isRead: notif.is_read,
+            time: 'Just now',
+            type: notif.type,
+            offerType: notif.offer_type,
+            offer_data: notif.offer_data,
+            campaignId: notif.campaign_id
+          }, ...prev];
+        });
+
         const msg = notif.type === 'campaign' 
           ? `🎉 New Ferrero Offer: ${notif.title}!` 
           : `🔔 ${notif.title}`;
