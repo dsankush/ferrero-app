@@ -35,6 +35,13 @@ function AppInner() {
   const isSubDB = location.pathname.startsWith('/subdb_platform');
   const isDashboard = location.pathname.startsWith('/dashboard');
 
+  React.useEffect(() => {
+    if (!isDashboard) {
+      document.documentElement.classList.remove('full-page-mode');
+      document.body.classList.remove('full-page-mode');
+    }
+  }, [location.pathname, isDashboard]);
+
   // Executive Desktop Dashboard: render full desktop width
   if (isDashboard) {
     return (
