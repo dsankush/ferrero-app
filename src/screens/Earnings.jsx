@@ -76,6 +76,9 @@ export const Earnings = () => {
       totalSpend: '₹52,400',
       visitsCount: 4,
       bonusPointsClaimed: 1200,
+      pointsRedeemed: 1000,
+      valueRedeemed: '₹500',
+      redeemedItems: '₹500 Rural Diesel Fuel Card (IndianOil)',
       repName: 'Rajesh Sharma (EMP-4821)',
       targetItems: [
         { name: 'Ferrero Rocher 16pc Restock', achieved: 45, target: 50, unit: 'Boxes', pct: 90, pts: 500, done: false },
@@ -85,6 +88,9 @@ export const Earnings = () => {
     },
     jul: {
       monthName: 'July 2026',
+      pointsRedeemed: 2000,
+      valueRedeemed: '₹1,000',
+      redeemedItems: 'Amazon Pay ₹1,000 E-Gift Voucher',
       completionPct: 92,
       status: 'Completed & Disbursed',
       totalBoxes: 158,
@@ -100,6 +106,9 @@ export const Earnings = () => {
     },
     aug: {
       monthName: 'August 2026 (Live)',
+      pointsRedeemed: 1500,
+      valueRedeemed: '₹750',
+      redeemedItems: '₹250 Direct UPI Cashback + Airtel Data Pack',
       completionPct: avgProgress,
       status: avgProgress >= 100 ? 'Completed' : 'In Progress',
       totalBoxes: totalStockUnits || 163,
@@ -413,19 +422,29 @@ export const Earnings = () => {
                   </div>
 
                   {/* Summary Metric Pills */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '.4rem', marginBottom: '.85rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '.4rem', marginBottom: '.85rem' }}>
                     <div style={{ background: 'var(--bg2)', padding: '.45rem', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '.58rem', color: 'var(--t3)', margin: 0, textTransform: 'uppercase' }}>Bonus Points</p>
-                      <p style={{ fontSize: '.8rem', fontWeight: 900, color: 'var(--g4)', margin: '.1rem 0 0 0' }}>+{selectedBifurcation.bonusPointsClaimed} pts</p>
+                      <p style={{ fontSize: '.55rem', color: 'var(--t3)', margin: 0, textTransform: 'uppercase' }}>Points Claimed</p>
+                      <p style={{ fontSize: '.75rem', fontWeight: 900, color: 'var(--g4)', margin: '.1rem 0 0 0' }}>+{selectedBifurcation.bonusPointsClaimed} pts</p>
                     </div>
                     <div style={{ background: 'var(--bg2)', padding: '.45rem', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '.58rem', color: 'var(--t3)', margin: 0, textTransform: 'uppercase' }}>Restocked</p>
-                      <p style={{ fontSize: '.8rem', fontWeight: 900, color: 'var(--t1)', margin: '.1rem 0 0 0' }}>{selectedBifurcation.totalBoxes} Boxes</p>
+                      <p style={{ fontSize: '.55rem', color: 'var(--t3)', margin: 0, textTransform: 'uppercase' }}>Points Redeemed</p>
+                      <p style={{ fontSize: '.75rem', fontWeight: 900, color: '#f59e0b', margin: '.1rem 0 0 0' }}>{selectedBifurcation.pointsRedeemed || 1000} pts</p>
                     </div>
                     <div style={{ background: 'var(--bg2)', padding: '.45rem', borderRadius: '8px', textAlign: 'center' }}>
-                      <p style={{ fontSize: '.58rem', color: 'var(--t3)', margin: 0, textTransform: 'uppercase' }}>Sub-DB Spend</p>
-                      <p style={{ fontSize: '.8rem', fontWeight: 900, color: '#c41e3a', margin: '.1rem 0 0 0' }}>{selectedBifurcation.totalSpend}</p>
+                      <p style={{ fontSize: '.55rem', color: 'var(--t3)', margin: 0, textTransform: 'uppercase' }}>Voucher Value</p>
+                      <p style={{ fontSize: '.75rem', fontWeight: 900, color: '#38bdf8', margin: '.1rem 0 0 0' }}>{selectedBifurcation.valueRedeemed || '₹500'}</p>
                     </div>
+                    <div style={{ background: 'var(--bg2)', padding: '.45rem', borderRadius: '8px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '.55rem', color: 'var(--t3)', margin: 0, textTransform: 'uppercase' }}>Restocked</p>
+                      <p style={{ fontSize: '.75rem', fontWeight: 900, color: 'var(--t1)', margin: '.1rem 0 0 0' }}>{selectedBifurcation.totalBoxes} Bxs</p>
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '8px', padding: '.5rem .75rem', marginBottom: '.85rem' }}>
+                    <p style={{ fontSize: '.68rem', fontWeight: 800, color: '#f59e0b', margin: 0 }}>
+                      💳 Month Redemption Item: <span style={{ color: '#fff' }}>{selectedBifurcation.redeemedItems || 'Reward Vouchers'}</span>
+                    </p>
                   </div>
 
                   {/* Target-by-target breakdown */}

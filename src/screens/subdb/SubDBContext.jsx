@@ -218,19 +218,19 @@ export const SubDBProvider = ({ children }) => {
         submitted_by: subUser?.id?.startsWith('local-') ? null : subUser?.id,
         retailer_name: invoiceData.retailer_name,
         retailer_id: invoiceData.retailer_id || null,
-        wholesaler_name: invoiceData.wholesaler_name,
-        purchase_date: invoiceData.purchase_date,
+        wholesaler_name: invoiceData.wholesaler_name || subUser?.name || 'Central Confectionery Agency',
+        purchase_date: invoiceData.purchase_date || new Date().toISOString().split('T')[0],
         invoice_number: invoiceData.invoice_number,
         products: invoiceData.products,
         total_amount: invoiceData.total_amount,
         raw_ocr_text: invoiceData.raw_ocr_text || null,
         scan_confidence: invoiceData.confidence || null,
-        status: 'verified'
+        status: 'pending' // Submitted for Admin / Executive Approval on /dashboard
       };
 
       let saved = { ...payload, id: `inv-${Date.now()}`, created_at: new Date().toISOString() };
 
-      // 1. SAVE INVOICE IN SUPABASE
+      // 1. SAVE INVOICE IN SUPABASE WITH PENDING STATUS
       if (isSupabaseConfigured && !subUser?.id?.startsWith('local-')) {
         try {
           const { data, error } = await supabase
@@ -249,34 +249,54 @@ export const SubDBProvider = ({ children }) => {
       setInvoices(updatedInvoices);
       try { localStorage.setItem('subdb_invoices', JSON.stringify(updatedInvoices)); } catch { }
 
-      // 2. DIRECTLY CREDIT RETAILER'S INVENTORY STOCK
-      if (invoiceData.retailer_id && invoiceData.products?.length > 0) {
-        await creditRetailerInventory(invoiceData.retailer_id, invoiceData.products, invoiceData.wholesaler_name, invoiceData.invoice_number, invoiceData.total_amount);
-      }
-
-      // 3. ADVANCE RETAILER MONTHLY RESTOCK TARGETS
-      if (invoiceData.retailer_id && invoiceData.products?.length > 0) {
-        await updateMonthlyTargets(invoiceData.retailer_id, invoiceData.products);
-      }
-
-      // 4. EMIT REAL-TIME EVENT FOR RETAILER POPUP
-      try {
-        localStorage.setItem('counterOS_new_invoice_event', JSON.stringify({
-          ...saved,
-          retailer_name: invoiceData.retailer_name,
-          total_amount: invoiceData.total_amount,
-          products: invoiceData.products,
-          invoice_number: invoiceData.invoice_number,
-          wholesaler_name: invoiceData.wholesaler_name,
-          timestamp: Date.now()
-        }));
-      } catch(e) {}
-
-      showToast(`✅ Bill submitted! Stock credited to ${invoiceData.retailer_name}`, 'success');
+      showToast(`📥 Invoice #${invoiceData.invoice_number} submitted for Executive Verification & Approval!`, 'info');
       return saved;
     } catch (err) {
       showToast('❌ Submit failed: ' + err.message, 'error');
       throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ─── Add New Retailer Method ───────────────────────────────────────────────
+  const addRetailer = async (newRetailerData) => {
+    setLoading(true);
+    try {
+      const payload = {
+        phone: newRetailerData.phone || `987${Math.floor(1000000 + Math.random() * 9000000)}`,
+        name: newRetailerData.name || 'Retailer Partner',
+        shop_name: newRetailerData.shop_name || 'Sweet Store',
+        location: newRetailerData.location || 'Central India',
+        zone: newRetailerData.zone || 'Central',
+        role: 'retailer',
+        points_balance: 0,
+        assigned_subdb_id: subUser?.id || null
+      };
+
+      let created = { ...payload, id: `ret-${Date.now()}`, created_at: new Date().toISOString() };
+
+      if (isSupabaseConfigured) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .insert([payload])
+            .select()
+            .single();
+          if (!error && data) created = data;
+        } catch (err) {
+          console.warn('[SubDB] Retailer insert failed:', err.message);
+        }
+      }
+
+      const updatedRetailers = [created, ...retailers];
+      setRetailers(updatedRetailers);
+      try { localStorage.setItem('subdb_my_retailers', JSON.stringify(updatedRetailers)); } catch {}
+      showToast(`✅ Retailer "${created.shop_name || created.name}" added & linked to Sub-DB!`, 'success');
+      return created;
+    } catch (err) {
+      showToast('❌ Failed to add retailer: ' + err.message, 'error');
+      return null;
     } finally {
       setLoading(false);
     }

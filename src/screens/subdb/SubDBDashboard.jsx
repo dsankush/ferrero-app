@@ -63,6 +63,97 @@ export const SubDBHeader = ({ title, showBack, onBack }) => {
           </button>
         </div>
       </div>
+      {/* Add New Retailer Modal */}
+      {showAddRetailerModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)',
+          backdropFilter: 'blur(6px)', zIndex: 2000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }}>
+          <div style={{
+            background: 'var(--bg1)', border: '2px solid var(--g4)',
+            borderRadius: 'var(--r16)', width: '100%', maxWidth: '380px',
+            padding: '1.25rem', boxShadow: '0 10px 40px rgba(0,0,0,0.9)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--g4)', margin: 0 }}>➕ Onboard New Retailer</h3>
+              <button onClick={() => setShowAddRetailerModal(false)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}>×</button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+              <div>
+                <label style={{ fontSize: '.68rem', fontWeight: 700, color: 'var(--t3)', display: 'block', marginBottom: '.25rem' }}>Shop / Outlet Name *</label>
+                <input
+                  style={{ width: '100%', padding: '.55rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r8)', color: '#fff', fontSize: '.8rem' }}
+                  placeholder="e.g. Bikaner Sweets & Confectionery"
+                  value={newRetailer.shop_name}
+                  onChange={e => setNewRetailer(p => ({ ...p, shop_name: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '.68rem', fontWeight: 700, color: 'var(--t3)', display: 'block', marginBottom: '.25rem' }}>Owner / Manager Name *</label>
+                <input
+                  style={{ width: '100%', padding: '.55rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r8)', color: '#fff', fontSize: '.8rem' }}
+                  placeholder="e.g. Ramesh Kumar"
+                  value={newRetailer.name}
+                  onChange={e => setNewRetailer(p => ({ ...p, name: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '.68rem', fontWeight: 700, color: 'var(--t3)', display: 'block', marginBottom: '.25rem' }}>Mobile Phone Number *</label>
+                <input
+                  style={{ width: '100%', padding: '.55rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r8)', color: '#fff', fontSize: '.8rem' }}
+                  placeholder="e.g. 9876543210"
+                  value={newRetailer.phone}
+                  onChange={e => setNewRetailer(p => ({ ...p, phone: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '.68rem', fontWeight: 700, color: 'var(--t3)', display: 'block', marginBottom: '.25rem' }}>City / District Location *</label>
+                <input
+                  style={{ width: '100%', padding: '.55rem', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r8)', color: '#fff', fontSize: '.8rem' }}
+                  placeholder="e.g. Khetgaon, Indore, MP"
+                  value={newRetailer.location}
+                  onChange={e => setNewRetailer(p => ({ ...p, location: e.target.value }))}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem' }}>
+                <button
+                  onClick={async () => {
+                    if (!newRetailer.shop_name || !newRetailer.name) return;
+                    await addRetailer(newRetailer);
+                    setShowAddRetailerModal(false);
+                    setNewRetailer({ shop_name: '', name: '', phone: '', location: '', zone: 'Central' });
+                  }}
+                  style={{
+                    flex: 1, padding: '.6rem',
+                    background: 'linear-gradient(135deg, #d4a574, #c41e3a)',
+                    border: 'none', borderRadius: 'var(--r8)',
+                    color: '#fff', fontWeight: 900, fontSize: '.8rem', cursor: 'pointer'
+                  }}
+                >
+                  Save & Link Retailer
+                </button>
+                <button
+                  onClick={() => setShowAddRetailerModal(false)}
+                  style={{
+                    flex: 1, padding: '.6rem',
+                    background: 'var(--bg3)', border: '1px solid var(--bdr)',
+                    borderRadius: 'var(--r8)', color: 'var(--t1)', fontWeight: 700, fontSize: '.8rem', cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
@@ -161,8 +252,10 @@ const InvoiceRow = ({ inv, onClick }) => {
 // ─── Dashboard Screen ─────────────────────────────────────────────────────────
 export const SubDBDashboard = () => {
   const navigate = useNavigate();
-  const { subUser, invoices } = useSubDB();
+  const { subUser, invoices, retailers = [], addRetailer } = useSubDB();
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [showAddRetailerModal, setShowAddRetailerModal] = useState(false);
+  const [newRetailer, setNewRetailer] = useState({ shop_name: '', name: '', phone: '', location: '', zone: 'Central' });
 
   const thisMonth = new Date().toISOString().slice(0, 7);
   const monthInvoices = invoices.filter(i => (i.created_at || '').startsWith(thisMonth));
@@ -212,6 +305,57 @@ export const SubDBDashboard = () => {
             <StatCard icon="receipt" label="Total Bills" value={invoices.length} color="#d4a574" />
             <StatCard icon="calendar_today" label="This Month" value={monthInvoices.length} color="#c41e3a" />
             <StatCard icon="currency_rupee" label="Total ₹" value={`₹${(totalAmount / 1000).toFixed(1)}k`} color="#10b981" />
+          </div>
+
+          {/* Connected Retailers & Add Retailer CTA */}
+          <div style={{
+            background: 'var(--bg2)',
+            border: '1.5px solid var(--g4)',
+            borderRadius: 'var(--r16)',
+            padding: '1rem',
+            marginBottom: '1.25rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '.75rem' }}>
+              <div>
+                <h4 style={{ fontSize: '.88rem', fontWeight: 900, color: 'var(--g4)', margin: 0 }}>Connected Sweet Shops & Outlets</h4>
+                <p style={{ fontSize: '.68rem', color: 'var(--t3)', margin: 0 }}>{(retailers || []).length} registered outlets linked to your account</p>
+              </div>
+              <button
+                onClick={() => setShowAddRetailerModal(true)}
+                style={{
+                  padding: '.4rem .8rem',
+                  background: 'linear-gradient(135deg, #d4a574, #c41e3a)',
+                  border: 'none',
+                  borderRadius: 'var(--r8)',
+                  color: '#fff',
+                  fontSize: '.72rem',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '.3rem'
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '.9rem' }}>person_add</span>
+                + Add Retailer
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '.5rem', overflowX: 'auto', paddingBottom: '.25rem' }}>
+              {(retailers || []).slice(0, 5).map((r, i) => (
+                <div key={r.id || i} style={{
+                  padding: '.5rem .75rem',
+                  background: 'var(--bg3)',
+                  border: '1px solid var(--bdr)',
+                  borderRadius: 'var(--r8)',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
+                }}>
+                  <p style={{ fontSize: '.75rem', fontWeight: 800, color: 'var(--t1)', margin: 0 }}>{r.shop_name || r.shop || r.name}</p>
+                  <p style={{ fontSize: '.65rem', color: 'var(--t3)', margin: 0 }}>📍 {r.location || r.loc || 'Central'}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Add Invoice CTA */}

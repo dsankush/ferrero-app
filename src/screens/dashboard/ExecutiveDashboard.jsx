@@ -5,7 +5,7 @@ import { showToast } from '../../components/ui/Toast';
 
 export const ExecutiveDashboard = () => {
   const navigate = useNavigate();
-  const { inventory, monthlyTargets, pointCredits, supportTickets = [], resolveSupportTicket } = useAppContext();
+  const { inventory, monthlyTargets, pointCredits, supportTickets = [], resolveSupportTicket, approvePendingInvoice, rejectPendingInvoice } = useAppContext();
 
   useEffect(() => {
     document.documentElement.classList.add('full-page-mode');
@@ -45,6 +45,28 @@ export const ExecutiveDashboard = () => {
   };
 
   // ─── FILTER STATES ────────────────────────────────────────────────────────
+  const [pendingInvoices, setPendingInvoices] = useState([]);
+  const [selectedPendingInv, setSelectedPendingInv] = useState(null);
+  const [expandedSubDBs, setExpandedSubDBs] = useState({});
+
+  const toggleSubDBExpand = (id) => {
+    setExpandedSubDBs(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const loadPendingInvoices = async () => {
+    try {
+      const raw = localStorage.getItem('subdb_invoices');
+      let list = raw ? JSON.parse(raw) : [];
+      setPendingInvoices(list.filter(i => i.status === 'pending'));
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    loadPendingInvoices();
+    const interval = setInterval(loadPendingInvoices, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   const [selectedZone, setSelectedZone] = useState('all');
   const [selectedASM, setSelectedASM] = useState('all');
   const [selectedSubDB, setSelectedSubDB] = useState('all');
@@ -510,8 +532,8 @@ export const ExecutiveDashboard = () => {
         j.boxes, j.spend, `${j.targetPct}%`,
         jl.boxes, jl.spend, `${jl.targetPct}%`,
         a.boxes, a.spend, `${a.targetPct}%`,
-        totBoxes, totSpend, totPts, `${avgTarget}%`,
-        rt.pan, rt.kyc
+        totBoxes, totSpend, totPts, Math.round(totPts * 0.4), `${avgTarget}%`,
+        rt.kyc
       ];
     });
 
@@ -543,9 +565,9 @@ export const ExecutiveDashboard = () => {
     const filename = `Ferrero_${activeTableView}_Table_Export_${dateStr}.csv`;
 
     if (activeTableView === 'retailers') {
-      headers = ['Shop Name', 'Owner', 'City', 'Assigned Sub-DB', 'Reporting ASM', 'Zone', 'Invoices Logged', 'Boxes Credited (Aug)', 'Wholesale Spend (INR)', 'Points Earned', 'PAN Number', 'KYC Status'];
+      headers = ['Shop Name', 'Owner', 'City', 'Assigned Sub-DB', 'Reporting ASM', 'Zone', 'Invoices Logged', 'Boxes Credited (Aug)', 'Wholesale Spend (INR)', 'Points Earned', 'Points Redeemed', 'Voucher Value Redeemed (INR)', 'KYC Status'];
       rows = filteredRetailers.map(rt => [
-        `"${rt.shop}"`, `"${rt.owner}"`, rt.city, `"${rt.subDB}"`, `"${rt.asm}"`, rt.zone, rt.invoices, rt.boxes, rt.spend, rt.points, rt.pan, rt.kyc
+        `"${rt.shop}"`, `"${rt.owner}"`, rt.city, `"${rt.subDB}"`, `"${rt.asm}"`, rt.zone, rt.invoices, rt.boxes, rt.spend, rt.points, Math.round(rt.points * 0.4), Math.round(rt.spend * 0.05), rt.kyc
       ]);
     } else if (activeTableView === 'monthly_matrix') {
       headers = ['Shop Name', 'City', 'Assigned Sub-DB Rep', 'Jun Boxes', 'Jun Spend (INR)', 'Jun Quota %', 'Jul Boxes', 'Jul Spend (INR)', 'Jul Quota %', 'Aug Boxes', 'Aug Spend (INR)', 'Aug Quota %', '3-Month Quota Avg'];
@@ -557,9 +579,9 @@ export const ExecutiveDashboard = () => {
         `${Math.round((rt.monthlyHistory.jun.targetPct + rt.monthlyHistory.jul.targetPct + rt.monthlyHistory.aug.targetPct) / 3)}%`
       ]);
     } else if (activeTableView === 'subdb') {
-      headers = ['Sub-DB Rep Name', 'Employee ID', 'Reporting Manager (ASM)', 'Zone', 'Territory', 'Connected Retailers', 'Bills Scanned', 'Boxes Restocked', 'Wholesale Spend (INR)', 'Target Quota %', 'Top SKU', 'Status'];
+      headers = ['Sub-DB Rep Name', 'Employee ID', 'Reporting Manager (ASM)', 'Zone', 'Territory', 'Connected Retailers', 'Bills Scanned', 'Boxes Restocked', 'Wholesale Spend (INR)', 'Top SKU', 'Status'];
       rows = filteredSubDBs.map(r => [
-        `"${r.name}"`, r.empId, `"${r.reportingManager}"`, r.zone, `"${r.territory}"`, r.retailersCount, r.invoicesLogged, r.boxesRestocked, r.totalWholesaleSpend, `${r.targetPct}%`, `"${r.topSKU}"`, r.status
+        `"${r.name}"`, r.empId, `"${r.reportingManager}"`, r.zone, `"${r.territory}"`, r.retailersCount, r.invoicesLogged, r.boxesRestocked, r.totalWholesaleSpend, `"${r.topSKU}"`, r.status
       ]);
     } else if (activeTableView === 'tickets') {
       headers = ['Ticket ID', 'Retailer Shop Name', 'Retailer Phone', 'Category', 'Subject / Issue', 'Description', 'Invoice Ref', 'Assigned Wholesaler (Sub-DB)', 'Priority', 'Status', 'Logged Date'];
@@ -1106,6 +1128,7 @@ export const ExecutiveDashboard = () => {
               { id: 'subdb', label: 'By Sub-DB Representative', icon: 'badge', count: filteredSubDBs.length },
               { id: 'asm', label: 'By Reporting Manager (ASM Rollup)', icon: 'supervisor_account', count: allASMData.length },
               { id: 'sku', label: 'By Product SKU Performance', icon: 'inventory_2', count: skuBreakdown.length },
+              { id: 'hierarchy', label: 'Sub-DB Retailer Hierarchy Tree', icon: 'account_tree', count: filteredSubDBs.length },
               { id: 'tickets', label: 'Grievances & Dispute Tickets', icon: 'support_agent', count: supportTickets.length }
             ].map(tab => (
               <button
@@ -1369,6 +1392,98 @@ export const ExecutiveDashboard = () => {
         )}
 
         {/* ─── TABLE 5: BY PRODUCT SKU ─── */}
+        {activeTableView === 'hierarchy' && (
+          <div>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--g4)', margin: 0 }}>Sub-DB Representative & Retailer Hierarchy Tree</h3>
+              <p style={{ fontSize: '.75rem', color: '#999', margin: '2px 0 0 0' }}>Hierarchical view of Sub-DB field reps and their connected sweet shop retailers with live metrics.</p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {filteredSubDBs.map(subdb => {
+                const childRetailers = allRetailersData.filter(r => r.subDBId === subdb.id || r.subDB.toLowerCase().includes(subdb.name.toLowerCase().split(' ')[0]));
+                const isExpanded = expandedSubDBs[subdb.id] ?? true;
+
+                return (
+                  <div key={subdb.id} style={{ background: '#110b08', border: '1.5px solid rgba(212,165,116,.3)', borderRadius: '14px', overflow: 'hidden' }}>
+                    {/* Sub-DB Parent Header */}
+                    <div
+                      onClick={() => toggleSubDBExpand(subdb.id)}
+                      style={{
+                        padding: '1rem 1.25rem', background: 'rgba(212,165,116,0.08)',
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+                        <div style={{ width: '2.4rem', height: '2.4rem', borderRadius: '50%', background: 'linear-gradient(135deg, #d4a574, #c41e3a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: '#fff', fontSize: '.9rem' }}>
+                          🏢
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                            <h4 style={{ fontSize: '.92rem', fontWeight: 900, color: '#fff', margin: 0 }}>{subdb.name}</h4>
+                            <span style={{ fontSize: '.68rem', fontWeight: 800, padding: '.15rem .45rem', borderRadius: '4px', background: 'rgba(212,165,116,0.2)', color: '#d4a574' }}>{subdb.empId}</span>
+                          </div>
+                          <p style={{ fontSize: '.72rem', color: '#999', margin: '2px 0 0 0' }}>📍 {subdb.territory} · Reporting to: {subdb.reportingManager}</p>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                        <div style={{ textAlign: 'right' }}>
+                          <p style={{ fontSize: '.85rem', fontWeight: 900, color: '#d4a574', margin: 0 }}>₹{(subdb.totalWholesaleSpend / 1000).toFixed(1)}k Spend</p>
+                          <p style={{ fontSize: '.68rem', color: '#999', margin: 0 }}>{subdb.boxesRestocked} boxes · {childRetailers.length} retailers</p>
+                        </div>
+                        <span className="material-symbols-outlined" style={{ color: '#d4a574', transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                          expand_more
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Child Retailers Table */}
+                    {isExpanded && (
+                      <div style={{ padding: '.75rem 1.25rem 1.25rem 1.25rem', borderTop: '1px solid rgba(212,165,116,0.15)' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.8rem' }}>
+                          <thead>
+                            <tr style={{ color: 'var(--g4)', textAlign: 'left', borderBottom: '1px solid rgba(212,165,116,0.2)' }}>
+                              <th style={{ padding: '.6rem .75rem' }}>Retailer Shop</th>
+                              <th style={{ padding: '.6rem .75rem' }}>Owner</th>
+                              <th style={{ padding: '.6rem .75rem' }}>City</th>
+                              <th style={{ padding: '.6rem .75rem' }}>Boxes</th>
+                              <th style={{ padding: '.6rem .75rem' }}>Spend (₹)</th>
+                              <th style={{ padding: '.6rem .75rem' }}>Points Earned</th>
+                              <th style={{ padding: '.6rem .75rem' }}>Points Redeemed</th>
+                              <th style={{ padding: '.6rem .75rem' }}>Value Redeemed (₹)</th>
+                              <th style={{ padding: '.6rem .75rem' }}>KYC Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {childRetailers.map(r => (
+                              <tr key={r.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                <td style={{ padding: '.6rem .75rem', fontWeight: 800, color: '#fff' }}>🏪 {r.shop}</td>
+                                <td style={{ padding: '.6rem .75rem', color: '#ccc' }}>{r.owner}</td>
+                                <td style={{ padding: '.6rem .75rem', color: '#aaa' }}>{r.city}</td>
+                                <td style={{ padding: '.6rem .75rem', fontWeight: 800, color: '#d4a574' }}>{r.boxes} bxs</td>
+                                <td style={{ padding: '.6rem .75rem', fontWeight: 800, color: '#fff' }}>₹{r.spend.toLocaleString('en-IN')}</td>
+                                <td style={{ padding: '.6rem .75rem', fontWeight: 800, color: '#10b981' }}>+{r.points} pts</td>
+                                <td style={{ padding: '.6rem .75rem', fontWeight: 800, color: '#f59e0b' }}>{Math.round(r.points * 0.4)} pts</td>
+                                <td style={{ padding: '.6rem .75rem', fontWeight: 800, color: '#38bdf8' }}>₹{Math.round(r.spend * 0.05).toLocaleString('en-IN')}</td>
+                                <td style={{ padding: '.6rem .75rem' }}>
+                                  <span style={{ fontSize: '.65rem', fontWeight: 900, padding: '.15rem .4rem', borderRadius: '4px', background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid #10b981' }}>
+                                    ✓ Verified
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {activeTableView === 'tickets' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
@@ -1634,6 +1749,101 @@ export const ExecutiveDashboard = () => {
 
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Pending Invoice Inspection & Approval Modal */}
+      {selectedPendingInv && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(8px)', zIndex: 3000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem'
+        }}>
+          <div style={{
+            background: '#160e0a', border: '2.5px solid #d4a574',
+            borderRadius: '20px', width: '100%', maxWidth: '520px',
+            padding: '1.75rem', boxShadow: '0 15px 50px rgba(0,0,0,0.9)',
+            position: 'relative'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', borderBottom: '1px solid rgba(212,165,116,0.2)', paddingBottom: '.75rem' }}>
+              <div>
+                <span style={{ fontSize: '.7rem', fontWeight: 900, background: 'rgba(212,165,116,0.2)', color: '#d4a574', padding: '.2rem .6rem', borderRadius: '6px' }}>
+                  ADMIN AUDIT &amp; APPROVAL QUEUE
+                </span>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fff', margin: '.3rem 0 0 0' }}>
+                  Verify Invoice #{selectedPendingInv.invoice_number}
+                </h3>
+              </div>
+              <button onClick={() => setSelectedPendingInv(null)} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.2rem', cursor: 'pointer' }}>×</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '.9rem', fontSize: '.85rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div>
+                  <p style={{ fontSize: '.7rem', color: '#888', margin: 0 }}>Retailer Store</p>
+                  <p style={{ fontWeight: 800, color: '#fff', margin: '2px 0 0 0' }}>🏪 {selectedPendingInv.retailer_name}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '.7rem', color: '#888', margin: 0 }}>Sub-DB Wholesaler</p>
+                  <p style={{ fontWeight: 800, color: '#d4a574', margin: '2px 0 0 0' }}>🏢 {selectedPendingInv.wholesaler_name}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '.7rem', color: '#888', margin: 0 }}>Total Amount</p>
+                  <p style={{ fontWeight: 900, color: '#10b981', fontSize: '1.1rem', margin: '2px 0 0 0' }}>₹{Number(selectedPendingInv.total_amount || 0).toLocaleString('en-IN')}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '.7rem', color: '#888', margin: 0 }}>Purchase Date</p>
+                  <p style={{ fontWeight: 800, color: '#fff', margin: '2px 0 0 0' }}>📅 {selectedPendingInv.purchase_date}</p>
+                </div>
+              </div>
+
+              <div>
+                <p style={{ fontSize: '.72rem', fontWeight: 800, color: 'var(--g4)', textTransform: 'uppercase', marginBottom: '.4rem' }}>Scanned SKU Items Breakdown</p>
+                <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: '10px', padding: '.75rem', border: '1px solid rgba(212,165,116,0.2)' }}>
+                  {(selectedPendingInv.products || selectedPendingInv.items_json || []).map((prod, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.8rem', color: '#ddd', padding: '.3rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <span>📦 {prod.name} ({prod.qty} {prod.unit || 'Box'})</span>
+                      <span style={{ fontWeight: 800, color: '#d4a574' }}>₹{Number(prod.total || prod.price * prod.qty || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '.75rem', marginTop: '.75rem' }}>
+                <button
+                  onClick={async () => {
+                    await approvePendingInvoice(selectedPendingInv.id);
+                    setSelectedPendingInv(null);
+                    loadPendingInvoices();
+                  }}
+                  style={{
+                    flex: 1.5, padding: '.8rem',
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    border: 'none', borderRadius: '10px',
+                    color: '#fff', fontWeight: 900, fontSize: '.9rem', cursor: 'pointer',
+                    boxShadow: '0 4px 15px rgba(16,185,129,0.4)'
+                  }}
+                >
+                  ✓ Approve &amp; Verify Invoice
+                </button>
+                <button
+                  onClick={async () => {
+                    await rejectPendingInvoice(selectedPendingInv.id);
+                    setSelectedPendingInv(null);
+                    loadPendingInvoices();
+                  }}
+                  style={{
+                    flex: 1, padding: '.8rem',
+                    background: 'rgba(239,68,68,0.15)',
+                    border: '1px solid #ef4444', borderRadius: '10px',
+                    color: '#ef4444', fontWeight: 800, fontSize: '.85rem', cursor: 'pointer'
+                  }}
+                >
+                  ✕ Reject
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
