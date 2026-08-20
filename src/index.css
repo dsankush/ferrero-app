@@ -125,7 +125,7 @@ html.full-page-mode #root>div{display:block!important;height:auto!important;min-
 .enter-fade{animation:fadein .35s ease both}
 
 /* Toast */
-#toast{position:absolute;bottom:6rem;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg4);color:var(--t1);padding:.55rem 1.1rem;border-radius:9999px;font-size:.78rem;font-weight:600;z-index:9999;border:1px solid var(--bdr2);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;white-space:nowrap;max-width:88%;text-align:center;box-shadow:var(--sh)}
+#toast{position:fixed;bottom:5.5rem;left:50%;transform:translateX(-50%) translateY(16px);background:var(--bg4);color:var(--t1);padding:.85rem 1.15rem;border-radius:14px;font-size:.82rem;font-weight:700;z-index:9999;border:1.5px solid var(--bdr2);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;white-space:normal;max-width:440px;width:calc(100% - 2.5rem);text-align:left;box-shadow:var(--sh);box-sizing:border-box}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #confetti-c{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:500;display:none}
 

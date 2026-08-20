@@ -343,22 +343,34 @@ export const SubDBDashboard = () => {
         />
       )}
 
-      {/* Floating Toaster Alert for Sub-DB Actions & Rejections */}
+      {/* Floating Square Card Toaster Alert for Sub-DB Actions & Rejections */}
       {toast && (
         <div style={{
           position: 'fixed', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)',
-          background: toast.type === 'error' ? 'rgba(196,30,58,0.95)' : 'rgba(20,20,20,0.95)',
-          color: '#fff', padding: '.75rem 1.25rem', borderRadius: '9999px',
-          border: toast.type === 'error' ? '1px solid #ef4444' : '1px solid rgba(212,165,116,0.5)',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
-          zIndex: 99999, display: 'flex', alignItems: 'center', gap: '.5rem',
-          fontSize: '.82rem', fontWeight: 800, animation: 'slideUp .2s ease-out',
-          maxWidth: '90vw', textAlign: 'center'
+          background: toast.type === 'error' ? '#230e0e' : '#1e140d',
+          color: '#fff', padding: '.9rem 1.15rem', borderRadius: '14px',
+          border: `1.5px solid ${toast.type === 'error' ? '#ef4444' : '#d4a574'}`,
+          boxShadow: '0 16px 40px rgba(0,0,0,0.8)',
+          zIndex: 99999, display: 'flex', alignItems: 'flex-start', gap: '.8rem',
+          fontSize: '.82rem', fontWeight: 700, animation: 'slideUp .22s ease-out',
+          maxWidth: '440px', width: 'calc(100% - 2.5rem)', boxSizing: 'border-box'
         }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>
-            {toast.type === 'error' ? 'error' : 'check_circle'}
-          </span>
-          {toast.message}
+          <div style={{
+            width: '2rem', height: '2rem', borderRadius: '8px',
+            background: toast.type === 'error' ? 'rgba(239,68,68,0.2)' : 'rgba(212,165,116,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '.1rem'
+          }}>
+            <span className="material-symbols-outlined" style={{ 
+              fontSize: '1.2rem', color: toast.type === 'error' ? '#ef4444' : '#d4a574' 
+            }}>
+              {toast.type === 'error' ? 'warning' : 'check_circle'}
+            </span>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: 0, lineHeight: 1.45, color: '#fff', wordBreak: 'break-word' }}>
+              {toast.message}
+            </p>
+          </div>
         </div>
       )}
     </div>
