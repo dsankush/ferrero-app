@@ -637,150 +637,7 @@ export const AppProvider = ({ children }) => {
       }
     };
     window.addEventListener('storage', handleStorage);
-    // ─── ADMIN INVOICE VERIFICATION & APPROVAL ─────────────────────────────────────────
-  const approvePendingInvoice = async (invoiceId) => {
-    let approvedInv = null;
 
-    if (isSupabaseConfigured) {
-      try {
-        const { data, error } = await supabase
-          .from('subdb_invoices')
-          .update({ status: 'verified', updated_at: new Date().toISOString() })
-          .eq('id', invoiceId)
-          .select()
-          .single();
-        if (!error && data) approvedInv = data;
-      } catch (err) {
-        console.warn('Supabase invoice approval error:', err.message);
-      }
-    }
-
-    if (!approvedInv) {
-      // Fallback local update
-      try {
-        const raw = localStorage.getItem('subdb_invoices');
-        if (raw) {
-          const list = JSON.parse(raw);
-          const idx = list.findIndex(i => i.id === invoiceId);
-          if (idx !== -1) {
-            list[idx].status = 'verified';
-            approvedInv = list[idx];
-            localStorage.setItem('subdb_invoices', JSON.stringify(list));
-          }
-        }
-      } catch (e) {}
-    }
-
-    if (approvedInv) {
-      const retailerId = approvedInv.retailer_id || 'c1000000-0000-0000-0000-000000000001';
-      const products = approvedInv.products || approvedInv.items_json || [];
-      const totalAmt = Number(approvedInv.total_amount || 0);
-
-      // 1. Update Retailer Inventory Stock
-      if (products.length > 0) {
-        for (const item of products) {
-          if (!item.name || !item.qty) continue;
-          if (isSupabaseConfigured) {
-            try {
-              const { data: dbInv } = await supabase
-                .from('inventory')
-                .select('*')
-                .eq('user_id', retailerId);
-              
-              const existing = dbInv?.find(i => i.name.toLowerCase() === item.name.toLowerCase());
-              if (existing) {
-                await supabase
-                  .from('inventory')
-                  .update({ qty: Number(existing.qty || 0) + Number(item.qty), updated_at: new Date().toISOString() })
-                  .eq('id', existing.id);
-              } else {
-                await supabase.from('inventory').insert([{
-                  user_id: retailerId,
-                  code: item.code || `FR-${Date.now().toString().slice(-4)}`,
-                  name: item.name,
-                  cat: item.cat || 'Rocher',
-                  unit: item.unit || 'Box',
-                  qty: Number(item.qty),
-                  buy: Number(item.price || 300),
-                  sell: Math.round(Number(item.price || 300) * 1.5),
-                  earn: Number(item.price || 300) * 0.5,
-                  mfg: '2026-06',
-                  exp: '2027-05',
-                  business_cat: 'rocher'
-                }]);
-              }
-            } catch (err) {
-              console.warn('Inventory credit error:', err.message);
-            }
-          }
-        }
-      }
-
-      // 2. Advance Monthly Restock Target & Auto-Credit Bonus Points if completed
-      setMonthlyTargets(prev => {
-        const totalBoxes = products.reduce((sum, p) => sum + Number(p.qty || 0), 0) || 10;
-        let milestoneReached = false;
-        let bonusPts = 5000;
-
-        const next = prev.map(t => {
-          const tgtVal = Number(t.target_value ?? t.target_boxes ?? 1) || 1;
-          const curVal = Number(t.current_value ?? t.restocked_boxes ?? 0) || 0;
-          const nextVal = curVal + totalBoxes;
-          const isDone = nextVal >= tgtVal;
-          if (isDone && t.status !== 'completed' && t.status !== 'claimed') {
-            milestoneReached = true;
-            bonusPts = Number(t.points_reward ?? t.bonus_points ?? 5000);
-          }
-          return {
-            ...t,
-            current_value: nextVal,
-            restocked_boxes: nextVal,
-            status: isDone ? 'completed' : 'in_progress'
-          };
-        });
-
-        if (milestoneReached) {
-          addPointCredits(bonusPts, `🎯 Target Milestone Completed: Auto-credited +${bonusPts} bonus points!`);
-          showToast(`🎉 Target Milestone Completed! Auto-credited +${bonusPts} points to Retailer!`, 'success');
-        }
-        saveToStorage('counterOS_monthlyTargets', next);
-        return next;
-      });
-
-      // 3. Send Realtime Notification to Retailer
-      addNotification({
-        title: '📦 Restock Invoice Approved & Verified!',
-        body: `Bill #${approvedInv.invoice_number} (₹${totalAmt.toLocaleString('en-IN')}) verified by Management and credited to your stock & targets.`,
-        role: 'retailer',
-        type: 'notification'
-      });
-
-      // 4. Emit popup alert for cross-tab retailer
-      try {
-        localStorage.setItem('counterOS_new_invoice_event', JSON.stringify({
-          ...approvedInv,
-          savedAt: Date.now()
-        }));
-      } catch (e) {}
-
-      showToast('✅ Invoice Approved & Verified! Retailer stock, targets & points updated.', 'success');
-      return true;
-    }
-    return false;
-  };
-
-  const rejectPendingInvoice = async (invoiceId, reason = 'Invoice rejected during audit') => {
-    if (isSupabaseConfigured) {
-      try {
-        await supabase
-          .from('subdb_invoices')
-          .update({ status: 'rejected', updated_at: new Date().toISOString() })
-          .eq('id', invoiceId);
-      } catch (e) {}
-    }
-    showToast('⚠️ Invoice has been rejected.', 'info');
-    return true;
-  };
 
   return () => window.removeEventListener('storage', handleStorage);
   }, [user?.role]);
@@ -2776,6 +2633,151 @@ export const AppProvider = ({ children }) => {
       }
     }
 
+    return true;
+  };
+
+  // ─── ADMIN INVOICE VERIFICATION & APPROVAL ─────────────────────────────────────────
+  const approvePendingInvoice = async (invoiceId) => {
+    let approvedInv = null;
+
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('subdb_invoices')
+          .update({ status: 'verified', updated_at: new Date().toISOString() })
+          .eq('id', invoiceId)
+          .select()
+          .single();
+        if (!error && data) approvedInv = data;
+      } catch (err) {
+        console.warn('Supabase invoice approval error:', err.message);
+      }
+    }
+
+    if (!approvedInv) {
+      // Fallback local update
+      try {
+        const raw = localStorage.getItem('subdb_invoices');
+        if (raw) {
+          const list = JSON.parse(raw);
+          const idx = list.findIndex(i => i.id === invoiceId);
+          if (idx !== -1) {
+            list[idx].status = 'verified';
+            approvedInv = list[idx];
+            localStorage.setItem('subdb_invoices', JSON.stringify(list));
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (approvedInv) {
+      const retailerId = approvedInv.retailer_id || 'c1000000-0000-0000-0000-000000000001';
+      const products = approvedInv.products || approvedInv.items_json || [];
+      const totalAmt = Number(approvedInv.total_amount || 0);
+
+      // 1. Update Retailer Inventory Stock
+      if (products.length > 0) {
+        for (const item of products) {
+          if (!item.name || !item.qty) continue;
+          if (isSupabaseConfigured) {
+            try {
+              const { data: dbInv } = await supabase
+                .from('inventory')
+                .select('*')
+                .eq('user_id', retailerId);
+              
+              const existing = dbInv?.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+              if (existing) {
+                await supabase
+                  .from('inventory')
+                  .update({ qty: Number(existing.qty || 0) + Number(item.qty), updated_at: new Date().toISOString() })
+                  .eq('id', existing.id);
+              } else {
+                await supabase.from('inventory').insert([{
+                  user_id: retailerId,
+                  code: item.code || `FR-${Date.now().toString().slice(-4)}`,
+                  name: item.name,
+                  cat: item.cat || 'Rocher',
+                  unit: item.unit || 'Box',
+                  qty: Number(item.qty),
+                  buy: Number(item.price || 300),
+                  sell: Math.round(Number(item.price || 300) * 1.5),
+                  earn: Number(item.price || 300) * 0.5,
+                  mfg: '2026-06',
+                  exp: '2027-05',
+                  business_cat: 'rocher'
+                }]);
+              }
+            } catch (err) {
+              console.warn('Inventory credit error:', err.message);
+            }
+          }
+        }
+      }
+
+      // 2. Advance Monthly Restock Target & Auto-Credit Bonus Points if completed
+      setMonthlyTargets(prev => {
+        const totalBoxes = products.reduce((sum, p) => sum + Number(p.qty || 0), 0) || 10;
+        let milestoneReached = false;
+        let bonusPts = 5000;
+
+        const next = prev.map(t => {
+          const tgtVal = Number(t.target_value ?? t.target_boxes ?? 1) || 1;
+          const curVal = Number(t.current_value ?? t.restocked_boxes ?? 0) || 0;
+          const nextVal = curVal + totalBoxes;
+          const isDone = nextVal >= tgtVal;
+          if (isDone && t.status !== 'completed' && t.status !== 'claimed') {
+            milestoneReached = true;
+            bonusPts = Number(t.points_reward ?? t.bonus_points ?? 5000);
+          }
+          return {
+            ...t,
+            current_value: nextVal,
+            restocked_boxes: nextVal,
+            status: isDone ? 'completed' : 'in_progress'
+          };
+        });
+
+        if (milestoneReached) {
+          addPointCredits(bonusPts, `🎯 Target Milestone Completed: Auto-credited +${bonusPts} bonus points!`);
+          showToast(`🎉 Target Milestone Completed! Auto-credited +${bonusPts} points to Retailer!`, 'success');
+        }
+        saveToStorage('counterOS_monthlyTargets', next);
+        return next;
+      });
+
+      // 3. Send Realtime Notification to Retailer
+      addNotification({
+        title: '📦 Restock Invoice Approved & Verified!',
+        body: `Bill #${approvedInv.invoice_number} (₹${totalAmt.toLocaleString('en-IN')}) verified by Management and credited to your stock & targets.`,
+        role: 'retailer',
+        type: 'notification'
+      });
+
+      // 4. Emit popup alert for cross-tab retailer
+      try {
+        localStorage.setItem('counterOS_new_invoice_event', JSON.stringify({
+          ...approvedInv,
+          savedAt: Date.now()
+        }));
+      } catch (e) {}
+
+      showToast('✅ Invoice Approved & Verified! Retailer stock, targets & points updated.', 'success');
+      return true;
+    }
+    return false;
+  };
+
+  const rejectPendingInvoice = async (invoiceId, reason = 'Invoice rejected during audit') => {
+    if (isSupabaseConfigured) {
+      try {
+        await supabase
+          .from('subdb_invoices')
+          .update({ status: 'rejected', updated_at: new Date().toISOString() })
+          .eq('id', invoiceId);
+      } catch (e) {}
+    }
+    showToast('⚠️ Invoice has been rejected.', 'info');
     return true;
   };
 
