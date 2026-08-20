@@ -166,7 +166,7 @@ const InvoiceRow = ({ inv, onClick }) => {
 // ─── Dashboard Screen ─────────────────────────────────────────────────────────
 export const SubDBDashboard = () => {
   const navigate = useNavigate();
-  const { subUser, invoices, retailers = [], addRetailer } = useSubDB();
+  const { subUser, invoices, retailers = [], addRetailer, toast } = useSubDB();
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showAddRetailerModal, setShowAddRetailerModal] = useState(false);
   const [newRetailer, setNewRetailer] = useState({ shop_name: '', name: '', phone: '', location: '', zone: 'Central' });
