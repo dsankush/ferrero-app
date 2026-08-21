@@ -798,6 +798,13 @@ export const AppProvider = ({ children }) => {
       setPointCreditsState(userPoints);
       saveToStorage('counterOS_pointCredits', userPoints);
       setWalletBalance(Number(profile.wallet_balance || 3482.50));
+
+      // Reset or sync kycDoc per user
+      if (!profile.is_kyc_verified && !profile.pan_number) {
+        setKycDoc(null);
+        saveToStorage('counterOS_kycDoc', null);
+      }
+
       return fullProfile;
     } catch (e) {
       console.error('Supabase auth failed, running local mode:', e);
@@ -1060,11 +1067,19 @@ export const AppProvider = ({ children }) => {
             .limit(1)
             .maybeSingle();
           if (kycErr) throw kycErr;
-          if (kycData) {
+          if (kycData && kycData.pan_number) {
             setKycDoc(kycData);
+            saveToStorage('counterOS_kycDoc', kycData);
+          } else {
+            setKycDoc(null);
+            saveToStorage('counterOS_kycDoc', null);
           }
         } catch (kycE) {
           console.warn('Skipped KYC loading from DB, using fallbacks:', kycE.message);
+          if (!user.pan_number && !user.is_kyc_verified) {
+            setKycDoc(null);
+            saveToStorage('counterOS_kycDoc', null);
+          }
         }
 
         // I. Load Admin Compliance Cases (For distributor or admin)
@@ -2114,6 +2129,12 @@ export const AppProvider = ({ children }) => {
 
   // ─── REWARDS REDEMPTION SYSTEM ──────────────────────────────────────────
   const submitKYC = async (kycData) => {
+    const panClean = (kycData.pan_number || '').trim().toUpperCase();
+    const gstClean = kycData.gst_number ? kycData.gst_number.trim().toUpperCase() : null;
+    const nameClean = kycData.retailer_name || kycData.full_name || user?.name || 'Retailer Partner';
+    const addressClean = kycData.address || user?.location || user?.loc || '';
+    const idProofClean = kycData.id_proof_url || 'kyc_proof_doc.pdf';
+
     if (isSupabaseConfigured && user?.id) {
       try {
         let result = null;
@@ -2121,16 +2142,21 @@ export const AppProvider = ({ children }) => {
           .from('kyc_documents')
           .select('id')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
+
+        const docRecord = {
+          user_id: user.id,
+          pan_number: panClean,
+          full_name: nameClean,
+          address: addressClean,
+          id_proof_url: idProofClean,
+          status: 'Verified'
+        };
 
         if (existingKyc) {
           const { data, error } = await supabase
             .from('kyc_documents')
-            .update({
-              ...kycData,
-              pan_verified: true,
-              kyc_approved: true
-            })
+            .update(docRecord)
             .eq('id', existingKyc.id)
             .select()
             .single();
@@ -2139,37 +2165,70 @@ export const AppProvider = ({ children }) => {
         } else {
           const { data, error } = await supabase
             .from('kyc_documents')
-            .insert([{
-              user_id: user.id,
-              ...kycData,
-              pan_verified: true,
-              kyc_approved: true
-            }])
+            .insert([docRecord])
             .select()
             .single();
           if (error) throw error;
           result = data;
         }
 
-        // Also update profiles table so PAN is permanently attached
+        // Also update profiles table so PAN & KYC is permanently saved to the user
         await supabase
           .from('profiles')
           .update({
-            pan_number: kycData.pan_number,
-            gst_number: kycData.gst_number || null,
-            is_kyc_verified: true
+            pan_number: panClean,
+            gst_number: gstClean,
+            is_kyc_verified: true,
+            name: nameClean
           })
           .eq('id', user.id);
 
-        setKycDoc(result);
+        // Record compliance audit entry
+        try {
+          await supabase
+            .from('compliance_audit_logs')
+            .insert([{
+              user_id: user.id,
+              pan_number: panClean,
+              action: 'Reward On-Demand KYC Verification',
+              event_type: 'KYC_SUBMISSION',
+              status_from: 'Unverified',
+              status_to: 'Verified',
+              performed_by: 'Retailer',
+              notes: `Retailer ${nameClean} verified PAN during reward redemption.`
+            }]);
+        } catch (auditErr) {
+          console.warn('Compliance audit log write skipped:', auditErr.message);
+        }
+
+        const fullKycObj = {
+          ...result,
+          pan_number: panClean,
+          gst_number: gstClean,
+          retailer_name: nameClean,
+          full_name: nameClean,
+          mobile_number: kycData.mobile_number || user?.phone,
+          address: addressClean,
+          id_proof_url: idProofClean
+        };
+
+        setKycDoc(fullKycObj);
+        saveToStorage('counterOS_kycDoc', fullKycObj);
+
         setUserState(prev => {
-          const updated = { ...prev, pan_number: kycData.pan_number, gst_number: kycData.gst_number || null, is_kyc_verified: true };
-          saveToStorage('counterOS_user', updated);
+          const updated = { 
+            ...prev, 
+            pan_number: panClean, 
+            gst_number: gstClean, 
+            name: nameClean,
+            is_kyc_verified: true 
+          };
+          saveToStorage(STORAGE_KEYS.user, updated);
           return updated;
         });
 
         showToast('✅ KYC verified & permanently saved to profile!', 'success');
-        return result;
+        return fullKycObj;
       } catch (e) {
         console.error('Failed to submit KYC in Supabase:', e);
         showToast('❌ KYC Submission failed.', 'error');
@@ -2179,17 +2238,28 @@ export const AppProvider = ({ children }) => {
       const mockDoc = {
         id: 'mock-kyc-' + Date.now(),
         user_id: user?.id || 'mock-user-id',
-        ...kycData,
-        pan_verified: true,
-        kyc_approved: true,
+        pan_number: panClean,
+        gst_number: gstClean,
+        retailer_name: nameClean,
+        full_name: nameClean,
+        mobile_number: kycData.mobile_number || user?.phone,
+        address: addressClean,
+        id_proof_url: idProofClean,
+        status: 'Verified',
         created_at: new Date().toISOString()
       };
       setKycDoc(mockDoc);
       saveToStorage('counterOS_kycDoc', mockDoc);
 
       setUserState(prev => {
-        const updated = { ...prev, pan_number: kycData.pan_number, gst_number: kycData.gst_number || null, is_kyc_verified: true };
-        saveToStorage('counterOS_user', updated);
+        const updated = { 
+          ...prev, 
+          pan_number: panClean, 
+          gst_number: gstClean, 
+          name: nameClean,
+          is_kyc_verified: true 
+        };
+        saveToStorage(STORAGE_KEYS.user, updated);
         return updated;
       });
 

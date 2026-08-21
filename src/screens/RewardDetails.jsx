@@ -24,29 +24,32 @@ export const RewardDetails = () => {
   const [idProofName, setIdProofName] = useState('');
   const [taxDeclApproved, setTaxDeclApproved] = useState(false);
 
-  // Initialize form states when kycDoc or user changes
+  // Initialize form states based on verified status
+  const isKycComplete = Boolean(
+    (user?.is_kyc_verified && user?.pan_number) ||
+    (kycDoc && kycDoc.pan_number && (kycDoc.user_id === user?.id || user?.phone === kycDoc?.mobile_number))
+  );
+
   useEffect(() => {
-    if (kycDoc) {
-      setPanNumber(kycDoc.pan_number || '');
-      setGstNumber(kycDoc.gst_number || '');
-      setRetailerName(kycDoc.retailer_name || user?.name || '');
-      setMobileNumber(kycDoc.mobile_number || user?.phone || '');
-      setAddress(kycDoc.address || user?.loc || '');
-      setIdProofName(kycDoc.id_proof_url ? 'kyc_proof_uploaded.pdf' : '');
-    } else if (user?.pan_number) {
-      setPanNumber(user.pan_number || '');
-      setGstNumber(user.gst_number || '');
-      setRetailerName(user?.name || '');
-      setMobileNumber(user?.phone || '');
-      setAddress(user?.loc || '');
-      setIdProofName('profile_onboarded_kyc.pdf');
+    if (isKycComplete) {
+      setPanNumber(kycDoc?.pan_number || user?.pan_number || '');
+      setGstNumber(kycDoc?.gst_number || user?.gst_number || '');
+      setRetailerName(kycDoc?.retailer_name || kycDoc?.full_name || user?.name || '');
+      setMobileNumber(kycDoc?.mobile_number || user?.phone || '');
+      setAddress(kycDoc?.address || user?.loc || user?.location || '');
+      setIdProofName(kycDoc?.id_proof_url || 'profile_verified_pan.pdf');
       setTaxDeclApproved(true);
     } else {
+      // Unverified user / First time claim: Clean empty fields, no autofilled PAN or proof!
+      setPanNumber('');
+      setGstNumber('');
+      setIdProofName('');
+      setTaxDeclApproved(false);
       setRetailerName(user?.name || '');
       setMobileNumber(user?.phone || '');
-      setAddress(user?.loc || '');
+      setAddress(user?.loc || user?.location || '');
     }
-  }, [kycDoc, user]);
+  }, [kycDoc, user, isKycComplete]);
 
   if (!reward) {
     return (
@@ -70,8 +73,6 @@ export const RewardDetails = () => {
 
   const userHasEnoughPoints = pointCredits >= reward.points_required;
   const remainingPoints = Math.max(0, pointCredits - reward.points_required);
-
-  const isKycComplete = Boolean((kycDoc && kycDoc.pan_number) || user?.pan_number || user?.is_kyc_verified);
 
   const handleOpenCalculator = () => {
     if (!userHasEnoughPoints) {
